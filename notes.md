@@ -13,6 +13,8 @@ This file is the single source of truth for the team. If you have a question abo
 
 You do not need to install Python, Node, or Postgres. Docker handles all of that.
 
+> **On Windows?** Follow `windows-setup.md` instead of this section. It covers WSL2, SSH, Git Bash, and Docker in the right order for Windows before coming back here at Step 7 (Clone the Repo).
+
 ---
 
 ### First-time setup
@@ -95,6 +97,7 @@ docker compose logs frontend
 | `.gitignore` | Tells Git what to never commit — most importantly both `.env` files which contain your API keys. |
 | `datadungeon-team-guide.md` | The original hackathon guide — roles, build order, API endpoints, and demo flow. |
 | `notes.md` | This file. Team reference for running the project and understanding the codebase. |
+| `windows-setup.md` | Full step-by-step setup guide for Windows teammates — terminal, SSH, WSL2, Docker, cloning the repo. |
 
 ---
 
