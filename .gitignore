@@ -1,0 +1,22 @@
+# Environment files — never commit these
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Docker
+postgres_data/
+
+# Editor
+.vscode/
+.idea/
+*.swp
