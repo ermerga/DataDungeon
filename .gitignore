@@ -1,5 +1,6 @@
 # Environment files — never commit these
 backend/.env
+frontend/.env
 
 # Python
 __pycache__/

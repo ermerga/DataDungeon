@@ -95,7 +95,7 @@ backend/
   models/                  <- Database table definitions
   schemas/                 <- What goes in and out of the API
   db/                      <- Database connection setup
-  data/                    <- Pre-loaded Washington County water data
+  data/                    <- Pre-loaded Cache County water data
 ```
 
 ### Frontend folder
@@ -103,20 +103,20 @@ backend/
 frontend/
   src/
     pages/                 <- Full screens
-      NewProject.tsx       <- Map + project form
-      Results.tsx          <- PASS / FAIL screen
-      WhatIf.tsx           <- Adjustment levers + AI cards
+      NewProject.jsx       <- Map + project form
+      Results.jsx          <- PASS / FAIL screen
+      WhatIf.jsx           <- Adjustment levers + AI cards
 
     components/            <- Reusable UI pieces
-      ParcelMap.tsx        <- The Mapbox draw widget
-      SupplyDemandChart.tsx <- The main chart
-      VerdictBadge.tsx     <- PASS / FAIL display
-      LeverPanel.tsx       <- The adjustment sliders
-      AgentCard.tsx        <- AI recommendation cards
+      ParcelMap.jsx        <- The Mapbox draw widget
+      SupplyDemandChart.jsx <- The main chart
+      VerdictBadge.jsx     <- PASS / FAIL display
+      LeverPanel.jsx       <- The adjustment sliders
+      AgentCard.jsx        <- AI recommendation cards
 
     lib/
-      api.ts               <- All backend calls go through here
-      types.ts             <- Shared data types
+      api.js               <- All backend calls go through here
+      types.js             <- Shared data types
 ```
 
 ---
@@ -127,7 +127,7 @@ frontend/
 |---|---|---|
 | Frontend | React pages and components | NewProject page, Results page, WhatIf page, charts, map |
 | Backend | FastAPI routes and simulation logic | All routers, simulation_engine.py, water_demand.py |
-| AI + Data | Claude API and demo data | ai_agent.py, washington_county.json dataset, agent.py router |
+| AI + Data | Claude API and demo data | ai_agent.py, cache_county.json dataset, agent.py router |
 
 > **If you are a team of 3:** Backend person also handles the data prep (it is a one-time task). Frontend person owns all React components. AI person owns the agent and can help glue things together.
 
@@ -162,12 +162,12 @@ Follow this sequence. Do not move to the next step until the current one works.
 7. Build `ai_agent.py` and the `POST /recommend` endpoint
 
 ### Frontend — start once backend step 3 is done
-1. Set up `api.ts` with the Axios client pointing at `localhost:8000`
-2. Build `NewProject.tsx` with the Mapbox map and project form
+1. Set up `api.js` with the Axios client pointing at `localhost:8000`
+2. Build `NewProject.jsx` with the Mapbox map and project form
 3. Build the `useSimulation` hook that polls for results
-4. Build `Results.tsx` with the supply/demand chart and PASS/FAIL badge
-5. Build `WhatIf.tsx` with the lever sliders wired to the whatif endpoint
-6. Build `AgentCard.tsx` to display AI recommendations
+4. Build `Results.jsx` with the supply/demand chart and PASS/FAIL badge
+5. Build `WhatIf.jsx` with the lever sliders wired to the whatif endpoint
+6. Build `AgentCard.jsx` to display AI recommendations
 
 > **The most important milestone:** Backend step 4 — `simulation_engine.py` returning a real FAIL result with a real fail year on hardcoded data. Once you have that, the rest of the demo builds around it quickly.
 
@@ -175,7 +175,7 @@ Follow this sequence. Do not move to the next step until the current one works.
 
 ## 8. How the Simulation Works (Simple Version)
 
-The simulation engine compares water supply to water demand over 50 years across four future climate scenarios. It does not connect to live data during the hackathon — it uses a pre-loaded JSON file with Washington County, Utah water data that we prepare once.
+The simulation engine compares water supply to water demand over 50 years across four future climate scenarios. It does not connect to live data during the hackathon — it uses a pre-loaded JSON file with Cache County, Utah water data that we prepare once.
 
 ### The four scenarios
 - **Baseline:** normal climate conditions extended forward
@@ -209,7 +209,7 @@ The agent returns two or three ranked intervention paths. Each path includes whi
 - Never commit your `.env` file. It is in `.gitignore` for a reason.
 - Each person works in their own Git branch and opens a pull request to merge.
 - If you break something, say so immediately. Do not spend two hours debugging alone.
-- The demo only needs to work for Washington County, Utah. Do not scope creep.
+- The demo only needs to work for Cache County, Utah. Do not scope creep.
 - Auth is optional. If you run out of time, hardcode a user and skip login.
 - Style last. Get it working first, make it look good second.
 

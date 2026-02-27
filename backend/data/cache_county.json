@@ -1,0 +1,133 @@
+{
+  "county": "Cache County",
+  "state": "Utah",
+  "fips": "49005",
+  "description": "Cache Valley, northern Utah. Primary source is the Bear River system and Logan River. Semi-arid high-elevation valley with heavy reliance on winter snowpack for annual supply.",
+
+  "supply": {
+    "total_baseline_acre_feet_per_year": 262000,
+    "annual_trend_rate": -0.004,
+    "sources": [
+      {
+        "name": "Bear River (Utah Compact Allocation)",
+        "acre_feet_per_year": 178000,
+        "reliability": "senior water right — first priority",
+        "notes": "Utah's share under the 1958 Bear River Compact"
+      },
+      {
+        "name": "Logan River",
+        "acre_feet_per_year": 51000,
+        "reliability": "moderate — highly dependent on snowpack",
+        "notes": "Originates in Bear River Range; peak flow March–June"
+      },
+      {
+        "name": "Groundwater (Cache Valley Aquifer)",
+        "acre_feet_per_year": 33000,
+        "reliability": "stable but declining",
+        "notes": "Recharge rate decreasing ~0.5% per year due to reduced infiltration"
+      }
+    ],
+    "monte_carlo": {
+      "description": "Log-normal distribution parameters for annual supply uncertainty. Sample once per simulation year.",
+      "distribution": "lognormal",
+      "mean_multiplier": 1.0,
+      "sigma": 0.11,
+      "notes": "Sigma of 0.11 reflects observed year-to-year variability in Bear River flows (1970–2023 USGS gauge data)"
+    }
+  },
+
+  "demand": {
+    "current_population": 149400,
+    "current_total_acre_feet_per_year": 198000,
+    "municipal_gpd_per_capita": 185,
+    "agricultural_acre_feet_per_year": 94000,
+    "municipal_acre_feet_per_year": 104000,
+    "demand_growth": {
+      "baseline_annual_rate": 0.019,
+      "monte_carlo": {
+        "description": "Normal distribution around baseline growth rate. Reflects uncertainty in population growth projections.",
+        "distribution": "normal",
+        "mean": 0.019,
+        "std_dev": 0.005,
+        "min_clamp": 0.005,
+        "max_clamp": 0.04
+      }
+    }
+  },
+
+  "climate_scenarios": {
+    "description": "Four named scenarios for fixed-scenario mode. For Monte Carlo mode use the distribution parameters below instead.",
+    "baseline": {
+      "label": "Baseline",
+      "supply_modifier": 1.0,
+      "description": "Historical average conditions projected forward. No change in precipitation or temperature trends beyond current observed trend."
+    },
+    "moderate_drought": {
+      "label": "Moderate Drought",
+      "supply_modifier": 0.79,
+      "description": "Consistent with CMIP6 SSP2-4.5 mid-century projections for northern Utah. Approx 21% reduction in Bear River inflows.",
+      "temperature_increase_c": 1.8
+    },
+    "severe_drought": {
+      "label": "Severe Drought",
+      "supply_modifier": 0.57,
+      "description": "Consistent with CMIP6 SSP5-8.5 projections. Prolonged multi-year drought compounded by earlier snowmelt and reduced snowpack.",
+      "temperature_increase_c": 3.2
+    },
+    "reduced_snowpack": {
+      "label": "Reduced Snowpack",
+      "supply_modifier": 0.71,
+      "description": "Peak runoff shifts 3–5 weeks earlier, reducing summer carry-over storage. Bear River Range snowpack reduced ~29% by mid-century.",
+      "temperature_increase_c": 2.1
+    }
+  },
+
+  "monte_carlo_climate": {
+    "description": "For full Monte Carlo mode: sample a supply shock each year from this distribution instead of using fixed scenario modifiers.",
+    "annual_supply_shock": {
+      "distribution": "normal",
+      "mean": -0.008,
+      "std_dev": 0.06,
+      "notes": "Mean reflects slow long-term drying trend. Std dev captures year-to-year variability. Cumulative over 50 years produces realistic drought sequences."
+    },
+    "recommended_n_simulations": 1000,
+    "output": "Reports P(failure) at each year — e.g. 72% probability of deficit by 2048"
+  },
+
+  "whatif_levers": {
+    "greywater_recycling": {
+      "demand_reduction_pct": 0.28,
+      "source": "EPA WaterSense standard",
+      "notes": "Reduces indoor municipal demand by 28%. Does not affect agricultural demand."
+    },
+    "pipeline_addition": {
+      "supply_increase_acre_feet_per_year": 5000,
+      "notes": "Represents a supplemental inter-basin transfer or new storage connection."
+    },
+    "unit_count_reduction": {
+      "notes": "Each 1% reduction in units reduces municipal demand by 1%. Applied before simulation run."
+    },
+    "delay_build_phase": {
+      "notes": "Shifts peak demand onset by N years. Buys time for supply infrastructure to catch up."
+    }
+  },
+
+  "pass_fail_rules": {
+    "fail_condition": "Demand exceeds supply in ANY year across ANY active scenario",
+    "fail_year": "First year in which deficit occurs",
+    "deficit_unit": "acre-feet",
+    "monte_carlo_threshold": "Project is flagged FAIL if P(failure by 2074) > 15%"
+  },
+
+  "metadata": {
+    "data_sources": [
+      "USGS National Water Information System — Logan River gauge 10109000",
+      "Utah Division of Water Resources — Bear River Basin Study 2021",
+      "Cache County General Plan 2023 — Water Resources Element",
+      "CMIP6 Projections via Utah Climate Center, Utah State University"
+    ],
+    "base_year": 2025,
+    "simulation_horizon_years": 50,
+    "last_updated": "2026-02-27"
+  }
+}
