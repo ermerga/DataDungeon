@@ -25,6 +25,7 @@ export default function NewProject() {
   const [pipelineAdded, setPipelineAdded] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  const [isSelectOpen, setIsSelectOpen] = useState(false)
 
   const nameRef = useRef(null)
   const unitRef = useRef(null)
@@ -80,16 +81,17 @@ export default function NewProject() {
 
   return (
     <div style={s.container}>
-      <button onClick={() => { logout(); navigate('/') }} style={s.logoutBtn}>
+      <button onClick={() => { logout(); navigate('/') }} style={s.logoutBtn} className="page-fade-in">
         Sign Out
       </button>
 
       {/* Map */}
       <div style={s.mapWrap}>
         <ParcelMap onParcelDrawn={setParcel} mapRef={mapRef} />
+        <div style={{ ...s.mapOverlay, opacity: step >= 1 ? 1 : 0 }} />
 
         {step === 0 && parcel && (
-          <button onClick={handleContinue} style={s.continueBtn}>
+          <button onClick={handleContinue} style={s.continueBtn} className="step-fade-in">
             Continue
           </button>
         )}
@@ -102,12 +104,12 @@ export default function NewProject() {
           <div style={s.stepIndicator}>Step {step} of {TOTAL_STEPS}</div>
 
           {step >= 2 && step <= 3 && (
-            <button onClick={() => setStep(step - 1)} style={s.backBtn}>← Back</button>
+            <button onClick={() => setStep(step - 1)} style={s.backBtn}><span style={{ position: 'relative', top: '-2px', marginRight: '3px' }}>←</span>Back</button>
           )}
 
           {/* Step 1: Name */}
           {step === 1 && (
-            <div style={s.stepContent}>
+            <div style={s.stepContent} className="step-fade-in">
               <h2 style={s.stepTitle}>What's the project name?</h2>
               <input
                 ref={nameRef}
@@ -130,7 +132,7 @@ export default function NewProject() {
 
           {/* Step 2: Homes */}
           {step === 2 && (
-            <div style={s.stepContent}>
+            <div style={s.stepContent} className="step-fade-in">
               <h2 style={s.stepTitle}>How many homes?</h2>
               <input
                 ref={unitRef}
@@ -155,24 +157,28 @@ export default function NewProject() {
 
           {/* Step 3: Build Year */}
           {step === 3 && (
-            <div style={s.stepContent}>
+            <div style={s.stepContent} className="step-fade-in">
               <h2 style={s.stepTitle}>When will you break ground?</h2>
-              <select
-                value={buildYear}
-                onChange={(e) => setBuildYear(e.target.value)}
-                style={s.input}
-              >
-                {Array.from({ length: 15 }, (_, i) => 2025 + i).map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
+              <div className={`select-wrap${isSelectOpen ? ' select-open' : ''}`} style={{ width: '100%' }}>
+                <select
+                  value={buildYear}
+                  onChange={(e) => { setBuildYear(e.target.value); setIsSelectOpen(false); e.target.blur() }}
+                  onMouseDown={() => setIsSelectOpen(prev => !prev)}
+                  onBlur={() => setIsSelectOpen(false)}
+                  style={s.input}
+                >
+                  {Array.from({ length: 15 }, (_, i) => 2025 + i).map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
               <button onClick={() => setStep(4)} style={s.nextBtn}>Next →</button>
             </div>
           )}
 
           {/* Step 4: Pipeline */}
           {step === 4 && (
-            <div style={s.stepContent}>
+            <div style={s.stepContent} className="step-fade-in">
               <h2 style={s.stepTitle}>Are you planning to add a water pipeline?</h2>
               <p style={s.stepSubtitle}>A pipeline adds dedicated supply capacity to your development.</p>
               <div style={s.yesNoRow}>
@@ -184,7 +190,7 @@ export default function NewProject() {
 
           {/* Step 5: Greywater */}
           {step === 5 && (
-            <div style={s.stepContent}>
+            <div style={s.stepContent} className="step-fade-in">
               <h2 style={s.stepTitle}>Planning greywater recycling?</h2>
               <p style={s.stepSubtitle}>Greywater systems reduce indoor municipal demand by about 28%.</p>
               {error && <div style={s.error}>{error}</div>}
@@ -225,6 +231,14 @@ const s = {
     flex: 1,
     minWidth: 0,
     position: 'relative'
+  },
+  mapOverlay: {
+    position: 'absolute',
+    inset: 0,
+    background: 'rgba(0,0,0,0.18)',
+    pointerEvents: 'none',
+    transition: 'opacity 0.35s ease',
+    zIndex: 1
   },
   logoutBtn: {
     position: 'fixed',
@@ -275,7 +289,7 @@ const s = {
     boxSizing: 'border-box'
   },
   stepIndicator: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 600,
     color: C.muted,
     textTransform: 'uppercase',
@@ -317,7 +331,7 @@ const s = {
     border: `1px solid rgba(151,157,172,0.25)`,
     borderRadius: 8,
     outline: 'none',
-    background: C.twilight,
+    backgroundColor: C.twilight,
     color: C.white,
     width: '100%',
     boxSizing: 'border-box'

@@ -1,3 +1,8 @@
+/* ── Smooth scrolling ───────────────────────────────────── */
+html {
+  scroll-behavior: auto;
+}
+
 /* ── Universal button hover ─────────────────────────────── */
 /* All dark-background buttons brighten slightly on hover    */
 button:not(:disabled) {
@@ -10,6 +15,70 @@ button:not(:disabled):hover {
 /* White-background buttons (Sign Up nav, form submits) dim instead */
 button.btn-light:not(:disabled):hover {
   filter: brightness(0.9);
+}
+
+/* ── Select custom chevron via wrapper ::after ───────────── */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 44px !important;
+}
+.select-wrap {
+  position: relative;
+}
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23979DAC' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+}
+/* Flip chevron up when open */
+.select-wrap.select-open::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23979DAC' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 15 12 9 18 15'/%3E%3C/svg%3E");
+}
+/* Nudge chevron down then back on hover */
+@keyframes chevronNudge {
+  0%   { transform: translateY(-50%); }
+  40%  { transform: translateY(calc(-50% + 2px)); }
+  100% { transform: translateY(-50%); }
+}
+.select-wrap:hover::after {
+  animation: chevronNudge 0.35s ease-out;
+}
+
+/* ── Hide number input spinners ─────────────────────────── */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* ── Universal input / select hover & focus ─────────────── */
+input:not(:disabled) {
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+select:not(:disabled) {
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+input:not(:disabled):hover,
+select:not(:disabled):hover {
+  filter: brightness(1.18);
+}
+input:focus,
+select:focus {
+  filter: brightness(1.22);
+  box-shadow: 0 0 0 2px rgba(151, 157, 172, 0.45);
 }
 
 /* ── Anchor / span acting as a link ─────────────────────── */
@@ -27,4 +96,60 @@ button.btn-light:not(:disabled):hover {
 .hint-link:hover {
   opacity: 0.7;
   text-decoration: underline;
+}
+
+/* ── Hero image entrance ─────────────────────────────── */
+@keyframes heroImageEnter {
+  from {
+    opacity: 0;
+    transform: translateX(32px) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+.hero-image-enter {
+  animation: heroImageEnter 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Text fade-in animations ─────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hero text — load-based with stagger */
+.hero-badge    { animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
+.hero-title    { animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both; }
+.hero-subtitle { animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both; }
+.hero-ctas     { animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.46s both; }
+
+/* Scroll-triggered fade-up for below-fold sections */
+.fade-up {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Load-based page / panel entrance */
+.page-fade-in {
+  animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+/* NewProject step transitions */
+.step-fade-in {
+  animation: fadeInUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

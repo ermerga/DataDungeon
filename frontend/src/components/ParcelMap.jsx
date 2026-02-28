@@ -144,7 +144,7 @@ export default function ParcelMap({ onParcelDrawn, mapRef }) {
       <div ref={mapContainer} style={{ width: '100%', height: '100vh' }} />
       
       {/* Instructions overlay */}
-      <div style={{
+      <div className="page-fade-in" style={{
         position: 'absolute',
         top: 12,
         left: 12,
@@ -163,6 +163,7 @@ export default function ParcelMap({ onParcelDrawn, mapRef }) {
       {pointCount > 0 && (
         <button
           onClick={clearDrawing}
+          className="step-fade-in"
           style={{
             position: 'absolute',
             bottom: 16,

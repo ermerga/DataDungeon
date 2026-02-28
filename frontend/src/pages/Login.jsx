@@ -38,7 +38,7 @@ export default function Login() {
 
       {/* ── Right: form panel ── */}
       <div style={s.formPanel}>
-        <div style={s.formInner}>
+        <div style={s.formInner} className="page-fade-in">
           <h1 style={s.title}>Welcome back</h1>
           <p style={s.subtitle}>Sign in to run your simulation</p>
 

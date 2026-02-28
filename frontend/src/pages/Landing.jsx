@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 // ── Palette ──────────────────────────────────────────────
@@ -33,10 +34,10 @@ const features = [
 ]
 
 const steps = [
-  { num: '01', label: 'Draw your parcel on the map' },
-  { num: '02', label: 'Enter project details' },
-  { num: '03', label: 'Run the simulation' },
-  { num: '04', label: 'Get your verdict — and a fix if you need one' }
+  { num: '01', label: 'Draw your parcel on the map', desc: 'Click points on a satellite view of Cache County to outline your development site. Drag markers to refine the boundary.' },
+  { num: '02', label: 'Enter project details', desc: 'Tell us how many homes you\'re planning, your target build year, and whether you\'re adding a pipeline or greywater system.' },
+  { num: '03', label: 'Run the simulation', desc: '1,000 Monte Carlo runs stress-test your project across four climate scenarios — from historical baseline to severe drought.' },
+  { num: '04', label: 'Get your verdict — and a fix if you need one', desc: 'Receive a clear PASS or FAIL with deficit probability by 2074. If you fail, AI pinpoints exactly which levers to adjust.' }
 ]
 
 const scenarios = [
@@ -48,6 +49,21 @@ const scenarios = [
 
 export default function Landing() {
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const els = document.querySelectorAll('.fade-up')
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible')
+          obs.unobserve(e.target)
+        }
+      }),
+      { threshold: 0, rootMargin: '0px 0px -50px 0px' }
+    )
+    els.forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
 
   return (
     <div style={s.page}>
@@ -66,20 +82,41 @@ export default function Landing() {
       {/* ── Hero ── */}
       <section style={s.heroSection}>
         <div style={s.heroContent}>
-          <div style={s.heroBadge}>Cache County, Utah · Water Viability Platform</div>
-          <h1 style={s.heroTitle}>
+          <div style={s.heroBadge} className="hero-badge">Cache County, Utah · Water Viability Platform</div>
+          <h1 style={s.heroTitle} className="hero-title">
             Know if your development<br />
             has enough water<br />
             before you build.
           </h1>
-          <p style={s.heroSubtitle}>
+          <p style={s.heroSubtitle} className="hero-subtitle">
             Thallo runs 1,000 climate simulations over 50 years to tell real estate
             developers whether Cache County can sustain their project. Get a PASS or FAIL
             verdict in seconds, and AI-powered recommendations if you need to adjust.
           </p>
-          <div style={s.heroCtas}>
-            <button onClick={() => navigate('/login')} style={s.primaryBtn}>Get Started →</button>
-            <a href="#how-it-works" style={s.ghostBtn} className="link-hover">See how it works</a>
+          <div style={s.heroCtas} className="hero-ctas">
+            <button onClick={() => navigate('/signup')} style={s.primaryBtn}>Get Started →</button>
+            <a
+              href="#how-it-works"
+              style={s.ghostBtn}
+              className="link-hover"
+              onClick={(e) => {
+                e.preventDefault()
+                const target = document.getElementById('how-it-works')
+                if (!target) return
+                const start = window.scrollY
+                const end = target.getBoundingClientRect().top + start
+                const duration = 700
+                const startTime = performance.now()
+                const ease = (t) => t < 0.5 ? 2*t*t : -1+(4-2*t)*t
+                const step = (now) => {
+                  const elapsed = now - startTime
+                  const progress = Math.min(elapsed / duration, 1)
+                  window.scrollTo(0, start + (end - start) * ease(progress))
+                  if (progress < 1) requestAnimationFrame(step)
+                }
+                requestAnimationFrame(step)
+              }}
+            >See how it works</a>
           </div>
         </div>
 
@@ -89,6 +126,7 @@ export default function Landing() {
             src="/woman-wades-in-ocean-at-sunset.jpg"
             alt="Water landscape"
             style={s.heroImage}
+            className="hero-image-enter"
           />
         </div>
       </section>
@@ -96,13 +134,14 @@ export default function Landing() {
       {/* ── How It Works ── */}
       <section id="how-it-works" style={{ ...s.section, background: C.navy }}>
         <div style={s.sectionInner}>
-          <h2 style={{ ...s.sectionTitle, color: C.white }}>How it works</h2>
-          <p style={{ ...s.sectionSubtitle, color: C.muted }}>Four steps from parcel to verdict.</p>
+          <h2 style={{ ...s.sectionTitle, color: C.white }} className="fade-up">How it works</h2>
+          <p style={{ ...s.sectionSubtitle, color: C.muted }} className="fade-up">Four steps from parcel to verdict.</p>
           <div style={s.stepsGrid}>
-            {steps.map((step) => (
-              <div key={step.num} style={s.stepCard}>
+            {steps.map((step, i) => (
+              <div key={step.num} style={{ ...s.stepCard, transitionDelay: `${i * 0.08}s` }} className="fade-up">
                 <div style={s.stepNum}>{step.num}</div>
                 <div style={s.stepLabel}>{step.label}</div>
+                <div style={s.stepDesc}>{step.desc}</div>
               </div>
             ))}
           </div>
@@ -112,13 +151,13 @@ export default function Landing() {
       {/* ── Features ── */}
       <section style={{ ...s.section, background: C.deep }}>
         <div style={s.sectionInner}>
-          <h2 style={{ ...s.sectionTitle, color: C.white }}>Built for serious analysis</h2>
-          <p style={{ ...s.sectionSubtitle, color: C.muted }}>
+          <h2 style={{ ...s.sectionTitle, color: C.white }} className="fade-up">Built for serious analysis</h2>
+          <p style={{ ...s.sectionSubtitle, color: C.muted }} className="fade-up">
             Every figure sourced from USGS, Utah DWR, and CMIP6 climate projections.
           </p>
           <div style={s.featuresGrid}>
-            {features.map((f) => (
-              <div key={f.title} style={s.featureCard}>
+            {features.map((f, i) => (
+              <div key={f.title} style={{ ...s.featureCard, transitionDelay: `${i * 0.08}s` }} className="fade-up">
                 <div style={s.featureIcon}>{f.icon}</div>
                 <h3 style={s.featureTitle}>{f.title}</h3>
                 <p style={s.featureDesc}>{f.desc}</p>
@@ -131,14 +170,14 @@ export default function Landing() {
       {/* ── Climate Scenarios ── */}
       <section style={{ ...s.section, background: C.navy }}>
         <div style={s.sectionInner}>
-          <h2 style={{ ...s.sectionTitle, color: C.white }}>Four climate scenarios, every run</h2>
-          <p style={{ ...s.sectionSubtitle, color: C.muted }}>
+          <h2 style={{ ...s.sectionTitle, color: C.white }} className="fade-up">Four climate scenarios, every run</h2>
+          <p style={{ ...s.sectionSubtitle, color: C.muted }} className="fade-up">
             We test your project against each scenario so you know how it holds up
             under the full range of projected futures.
           </p>
           <div style={s.scenariosGrid}>
-            {scenarios.map((sc) => (
-              <div key={sc.name} style={s.scenarioCard}>
+            {scenarios.map((sc, i) => (
+              <div key={sc.name} style={{ ...s.scenarioCard, transitionDelay: `${i * 0.08}s` }} className="fade-up">
                 <div style={s.scenarioModifier}>{sc.modifier}</div>
                 <div style={s.scenarioName}>{sc.name}</div>
                 <div style={s.scenarioDesc}>{sc.desc}</div>
@@ -151,13 +190,13 @@ export default function Landing() {
       {/* ── CTA ── */}
       <section style={{ ...s.section, background: C.deep, textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ ...s.sectionTitle, color: C.white, marginBottom: 16 }}>
+          <h2 style={{ ...s.sectionTitle, color: C.white, marginBottom: 16 }} className="fade-up">
             Ready to run your simulation?
           </h2>
-          <p style={{ ...s.sectionSubtitle, color: C.muted, marginBottom: 36 }}>
+          <p style={{ ...s.sectionSubtitle, color: C.muted, marginBottom: 36 }} className="fade-up">
             It takes under two minutes to draw your parcel and get a full 50-year verdict.
           </p>
-          <button onClick={() => navigate('/login')} style={s.primaryBtn}>Get Started →</button>
+          <button onClick={() => navigate('/signup')} style={s.primaryBtn} className="fade-up">Get Started →</button>
         </div>
       </section>
 
@@ -353,7 +392,13 @@ const s = {
     fontSize: 16,
     fontWeight: 600,
     color: C.white,
-    lineHeight: 1.4
+    lineHeight: 1.4,
+    marginBottom: 10
+  },
+  stepDesc: {
+    fontSize: 13,
+    color: C.muted,
+    lineHeight: 1.6
   },
 
   // ── Features

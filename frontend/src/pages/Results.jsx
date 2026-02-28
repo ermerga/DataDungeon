@@ -164,7 +164,7 @@ export default function Results() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.content}>
+      <div style={styles.content} className="page-fade-in">
 
         {/* Header */}
         <div style={styles.header}>
@@ -190,7 +190,7 @@ export default function Results() {
         <VerdictBadge verdict={displayed.verdict} />
 
         {/* Stats row */}
-        <div style={styles.statsRow}>
+        <div style={{ ...styles.statsRow, animation: 'fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.12s both' }}>
           <StatCard
             label={`P(Failure by ${displayed.simulation_end_year})`}
             value={`${(displayed.p_failure_by_end_year * 100).toFixed(1)}%`}
@@ -212,10 +212,12 @@ export default function Results() {
         </div>
 
         {/* Chart — updates live */}
-        <SupplyDemandChart failureCurve={displayed.failure_curve} />
+        <div style={{ animation: 'fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.22s both' }}>
+          <SupplyDemandChart failureCurve={displayed.failure_curve} />
+        </div>
 
         {/* Scenario results — updates live when levers change */}
-        <div style={styles.card}>
+        <div style={{ ...styles.card, animation: 'fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.32s both' }}>
           <h3 style={styles.sectionTitle}>Fixed Climate Scenarios</h3>
           <div style={styles.scenarioGrid}>
             {Object.entries(SCENARIO_LABELS).map(([key, label]) => {
