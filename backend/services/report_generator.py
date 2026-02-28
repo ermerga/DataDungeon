@@ -22,6 +22,25 @@ LOGO_PATH = Path(__file__).parent.parent / "image.png"
 
 
 # ---------------------------------------------------------------------------
+# Parcel centroid helper
+# ---------------------------------------------------------------------------
+
+def _calc_centroid(parcel_geojson: dict):
+    """Return (lat, lng) centroid of a GeoJSON Polygon or Feature, or (None, None)."""
+    try:
+        geojson = parcel_geojson or {}
+        if geojson.get("type") == "Feature":
+            coords = geojson["geometry"]["coordinates"][0]
+        else:
+            coords = geojson["coordinates"][0]
+        lngs = [c[0] for c in coords]
+        lats = [c[1] for c in coords]
+        return sum(lats) / len(lats), sum(lngs) / len(lngs)
+    except (KeyError, IndexError, TypeError, ZeroDivisionError):
+        return None, None
+
+
+# ---------------------------------------------------------------------------
 # Colours — Thallo brand palette
 # ---------------------------------------------------------------------------
 
@@ -104,7 +123,7 @@ def _scenario_row(pdf: FPDF, label: str, result: str, shade: bool = False):
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def generate_report(project, simulation_results: dict) -> bytes:
+def generate_report(project, simulation_results: dict, levers: dict = None) -> bytes:
     """
     Build a PDF report and return the raw bytes.
 
@@ -158,11 +177,26 @@ def generate_report(project, simulation_results: dict) -> bytes:
 
     _section_heading(pdf, "Project Details")
 
-    _kv_row(pdf, "Project Name",        project.project_name,            shade=False)
-    _kv_row(pdf, "Homes Proposed",      f"{project.unit_count:,} units",  shade=True)
-    _kv_row(pdf, "Planned Build Year",  str(project.build_year),          shade=False)
-    _kv_row(pdf, "Greywater Recycling", "Yes" if project.greywater_recycling else "No", shade=True)
-    _kv_row(pdf, "Pipeline Added",      "Yes" if project.pipeline_added    else "No", shade=False)
+    lat, lng = _calc_centroid(project.parcel_geojson)
+    centroid_str = f"{lat:.5f} N, {lng:.5f} W" if lat is not None else "N/A"
+
+    # Apply lever adjustments to displayed values if provided
+    unit_reduction_pct  = levers.get("unit_reduction_pct", 0)  if levers else 0
+    build_delay_years   = levers.get("build_delay_years", 0)    if levers else 0
+    grey_lever          = levers.get("greywater_recycling", False) if levers else False
+    pipe_lever          = levers.get("pipeline_added", False)   if levers else False
+
+    displayed_units      = round(project.unit_count * (1 - unit_reduction_pct))
+    displayed_build_year = project.build_year + build_delay_years
+    displayed_grey       = grey_lever or project.greywater_recycling
+    displayed_pipe       = pipe_lever or project.pipeline_added
+
+    _kv_row(pdf, "Project Name",        project.project_name,               shade=False)
+    _kv_row(pdf, "Parcel Center",       centroid_str,                       shade=True)
+    _kv_row(pdf, "Homes Proposed",      f"{displayed_units:,} units",       shade=False)
+    _kv_row(pdf, "Planned Build Year",  str(displayed_build_year),          shade=True)
+    _kv_row(pdf, "Greywater Recycling", "Yes" if displayed_grey else "No",  shade=False)
+    _kv_row(pdf, "Pipeline Added",      "Yes" if displayed_pipe else "No",  shade=True)
 
     # -----------------------------------------------------------------------
     # 3. Verdict banner

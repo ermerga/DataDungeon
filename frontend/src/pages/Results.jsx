@@ -214,12 +214,12 @@ export default function Results() {
         {/* Chart — updates live */}
         <SupplyDemandChart failureCurve={displayed.failure_curve} />
 
-        {/* Scenario results — always shows original */}
+        {/* Scenario results — updates live when levers change */}
         <div style={styles.card}>
           <h3 style={styles.sectionTitle}>Fixed Climate Scenarios</h3>
           <div style={styles.scenarioGrid}>
             {Object.entries(SCENARIO_LABELS).map(([key, label]) => {
-              const r = scenario_results[key]
+              const r = (displayed.scenario_results || scenario_results)[key]
               const pass = r === 'PASS'
               return (
                 <div key={key} style={styles.scenarioRow}>
@@ -294,7 +294,17 @@ export default function Results() {
         {/* Download report */}
         <div style={styles.actions}>
           <a
-            href={`http://localhost:8000/projects/${id}/report`}
+            href={(() => {
+              const base = `http://localhost:8000/projects/${id}/report`
+              if (!whatIfResult) return base
+              const p = new URLSearchParams({
+                unit_reduction_pct: levers.unit_reduction_pct,
+                greywater_recycling: levers.greywater_recycling,
+                pipeline_added: levers.pipeline_added,
+                build_delay_years: levers.build_delay_years,
+              })
+              return `${base}?${p}`
+            })()}
             target="_blank"
             rel="noreferrer"
             style={styles.reportBtn}
