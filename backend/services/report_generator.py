@@ -235,19 +235,21 @@ def generate_report(project, simulation_results: dict, levers: dict = None) -> b
 
     _section_heading(pdf, "Simulation Summary")
 
-    p_fail_pct = f"{p_fail * 100:.1f}%"
-    threshold_note = "  (threshold: 15%)"
+    p_fail_pct   = f"{p_fail * 100:.1f}%"
+    failed_count = round(p_fail * 1000)
 
-    _kv_row(pdf, f"Probability of Deficit by {end_year}",
-            p_fail_pct + threshold_note, shade=False)
+    _kv_row(pdf, f"Chance of Water Shortage by {end_year}",
+            f"{p_fail_pct}  ({failed_count} of 1,000 simulated futures ran short)",
+            shade=False)
+    _kv_row(pdf, "Pass Threshold", "15% or fewer futures must run short", shade=True)
     _kv_row(pdf, "Monte Carlo Runs",
-            "1,000 independent simulations", shade=True)
+            "1,000 independent simulations", shade=False)
     _kv_row(pdf, "Simulation Horizon",
-            f"{project.build_year} - {end_year}  (50 years)", shade=False)
+            f"{project.build_year} - {end_year}  (50 years)", shade=True)
     _kv_row(pdf, "Median First Failure Year",
-            str(first_year) if first_year else "N/A  (no failure occurred)", shade=True)
+            str(first_year) if first_year else "N/A  (no failure occurred)", shade=False)
     _kv_row(pdf, "Median Deficit at Failure",
-            f"{deficit:,.1f} acre-feet/year" if deficit else "N/A  (no deficit recorded)", shade=False)
+            f"{deficit:,.1f} acre-feet/year" if deficit else "N/A  (no deficit recorded)", shade=True)
 
     # -----------------------------------------------------------------------
     # 5. Fixed scenario results

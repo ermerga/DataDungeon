@@ -203,9 +203,9 @@ export default function Results() {
         {/* Stats row */}
         <div style={styles.statsRow}>
           <StatCard
-            label={`P(Failure by ${displayed.simulation_end_year})`}
+            label={`Chance of Water Shortage by ${displayed.simulation_end_year}`}
             value={`${(displayed.p_failure_by_end_year * 100).toFixed(1)}%`}
-            sub="15% = pass threshold"
+            sub={`${Math.round(displayed.p_failure_by_end_year * 1000)} of 1,000 simulated futures ran short  ·  15% = pass threshold`}
             highlight={displayed.verdict === 'FAIL'}
           />
           <StatCard
