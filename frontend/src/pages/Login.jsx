@@ -96,7 +96,7 @@ const s = {
   // ── Left image panel
   imagePanel: {
     flex: 1,
-    backgroundImage: 'url(/woman-wades-in-ocean-at-sunset.jpg)',
+    backgroundImage: 'url(/view-of-the-sea-iphone-wallpaper.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     position: 'relative'
