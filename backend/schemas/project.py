@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class ProjectCreate(BaseModel):
-    project_name: str
+    name: str
     unit_count: int = Field(gt=0, description="Number of homes in the development")
     build_year: int = Field(ge=2025, le=2075, description="Year the development comes online")
     parcel_geojson: Dict[str, Any] = Field(

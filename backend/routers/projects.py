@@ -12,7 +12,7 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db)):
     # Create a Python object from the request body.
     # At this point it exists in memory only — nothing has been written to the database yet.
     project = Project(
-        project_name=body.project_name,
+        project_name=body.name,
         unit_count=body.unit_count,
         build_year=body.build_year,
         parcel_geojson=body.parcel_geojson,
