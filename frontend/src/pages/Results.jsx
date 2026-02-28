@@ -34,7 +34,8 @@ export default function Results() {
   const intervalRef = useRef(null)
 
   // What-if
-  const [levers, setLevers]           = useState(DEFAULT_LEVERS)
+  const [levers, setLevers]             = useState(DEFAULT_LEVERS)
+  const leversInitialized               = useRef(false)
   const [whatIfResult, setWhatIfResult] = useState(null)
   const [whatIfLoading, setWhatIfLoading] = useState(false)
 
@@ -43,10 +44,20 @@ export default function Results() {
   const [recsLoading, setRecsLoading]         = useState(false)
   const [recsError, setRecsError]             = useState(null)
 
-  // Fetch project details for the header
+  // Fetch project details for the header; seed levers from project's initial settings
   useEffect(() => {
     api.get(`/projects/${id}`)
-      .then(res => setProject(res.data))
+      .then(res => {
+        setProject(res.data)
+        if (!leversInitialized.current) {
+          leversInitialized.current = true
+          setLevers(prev => ({
+            ...prev,
+            greywater_recycling: res.data.greywater_recycling,
+            pipeline_added: res.data.pipeline_added,
+          }))
+        }
+      })
       .catch(() => {})
   }, [id])
 
@@ -80,8 +91,8 @@ export default function Results() {
 
     const hasChanges =
       levers.unit_reduction_pct > 0 ||
-      levers.greywater_recycling ||
-      levers.pipeline_added ||
+      levers.greywater_recycling !== (project?.greywater_recycling ?? false) ||
+      levers.pipeline_added !== (project?.pipeline_added ?? false) ||
       levers.build_delay_years > 0
 
     if (!hasChanges) {
@@ -102,7 +113,7 @@ export default function Results() {
     }, 400)
 
     return () => clearTimeout(timer)
-  }, [levers, status, id])
+  }, [levers, status, id, project])
 
   const fetchRecommendations = async () => {
     setRecsLoading(true)

@@ -16,9 +16,10 @@ Supply model:
 """
 
 import json
+import math
 import numpy as np
 from pathlib import Path
-from services.water_demand import get_demand_for_year
+from services.water_demand import get_demand_for_year, calculate_irrigation_demand
 
 # ---------------------------------------------------------------------------
 # County data — loaded once at module startup, not on every request
@@ -46,6 +47,47 @@ FAIL_THRESHOLD = 0.15
 
 
 # ---------------------------------------------------------------------------
+# Parcel area helper
+# ---------------------------------------------------------------------------
+
+def calc_parcel_area_acres(parcel_geojson: dict) -> float:
+    """
+    Calculate the area of a GeoJSON polygon in acres using the Shoelace formula
+    with a latitude correction for Cache County, Utah (~41.75° N).
+
+    Handles both GeoJSON Feature objects and bare Polygon geometry objects.
+    Returns 0.0 if the geometry is missing or malformed.
+    """
+    try:
+        geojson = parcel_geojson or {}
+        if geojson.get("type") == "Feature":
+            coords = geojson["geometry"]["coordinates"][0]
+        else:
+            coords = geojson["coordinates"][0]
+
+        # Meters per degree at this latitude
+        avg_lat = sum(c[1] for c in coords) / len(coords)
+        lat_rad = math.radians(avg_lat)
+        m_per_deg_lat = 111_139.0
+        m_per_deg_lng = 111_139.0 * math.cos(lat_rad)
+
+        # Shoelace formula on metre-projected coordinates
+        n = len(coords)
+        area_m2 = 0.0
+        for i in range(n):
+            j = (i + 1) % n
+            xi = coords[i][0] * m_per_deg_lng
+            yi = coords[i][1] * m_per_deg_lat
+            xj = coords[j][0] * m_per_deg_lng
+            yj = coords[j][1] * m_per_deg_lat
+            area_m2 += xi * yj - xj * yi
+
+        return abs(area_m2) / 2.0 / 4_047.0  # m² → acres
+    except (KeyError, IndexError, TypeError, ZeroDivisionError):
+        return 0.0
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -56,6 +98,7 @@ def run_simulation(
     pipeline_added: bool = False,
     unit_reduction_pct: float = 0.0,
     build_delay_years: int = 0,
+    parcel_geojson: dict = None,
     n_simulations: int = N_SIMULATIONS,
 ) -> dict:
     """
@@ -68,6 +111,7 @@ def run_simulation(
         pipeline_added:      if True, adds 500 acre-feet/year to the development allocation
         unit_reduction_pct:  fraction to reduce unit count (0.2 = 20% fewer homes)
         build_delay_years:   years to push back the build start date
+        parcel_geojson:      GeoJSON polygon used to compute outdoor irrigation demand
         n_simulations:       number of Monte Carlo runs (default 1,000)
 
     Returns:
@@ -78,6 +122,11 @@ def run_simulation(
     effective_unit_count = int(unit_count * (1 - unit_reduction_pct))
     effective_build_year = build_year + build_delay_years
     demand_multiplier = (1.0 - GREYWATER_DEMAND_REDUCTION) if greywater_recycling else 1.0
+
+    # Outdoor irrigation demand — fixed each year, not affected by greywater
+    # (greywater offsets indoor toilet flushing, not outdoor sprinklers)
+    parcel_acres = calc_parcel_area_acres(parcel_geojson) if parcel_geojson else 0.0
+    irrigation_demand_af = calculate_irrigation_demand(effective_unit_count, parcel_acres)
 
     # Build the simulation window: 50 years starting from the build year.
     # The supply trend is indexed from TREND_BASELINE_YEAR (2026) so that a project
@@ -111,9 +160,10 @@ def run_simulation(
             if pipeline_added:
                 available += PIPELINE_SUPPLY_ADDITION
 
-            demand = get_demand_for_year(
-                effective_unit_count, effective_build_year, year
-            ) * demand_multiplier
+            demand = (
+                get_demand_for_year(effective_unit_count, effective_build_year, year) * demand_multiplier
+                + irrigation_demand_af
+            )
 
             if demand > available:
                 scenario_failed = True
@@ -154,9 +204,10 @@ def run_simulation(
             if pipeline_added:
                 available += PIPELINE_SUPPLY_ADDITION
 
-            demand = get_demand_for_year(
-                effective_unit_count, effective_build_year, year, growth_rate
-            ) * demand_multiplier
+            demand = (
+                get_demand_for_year(effective_unit_count, effective_build_year, year, growth_rate) * demand_multiplier
+                + irrigation_demand_af
+            )
 
             if demand > available:
                 sim_failed = True

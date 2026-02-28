@@ -18,6 +18,7 @@ def _run_simulation_task(
     build_year: int,
     greywater_recycling: bool,
     pipeline_added: bool,
+    parcel_geojson: dict,
 ):
     """
     Runs in the background after POST /simulate returns.
@@ -31,6 +32,7 @@ def _run_simulation_task(
             build_year=build_year,
             greywater_recycling=greywater_recycling,
             pipeline_added=pipeline_added,
+            parcel_geojson=parcel_geojson,
         )
 
         project = db.query(Project).filter(Project.id == project_id).first()
@@ -82,6 +84,7 @@ def start_simulation(
         project.build_year,
         project.greywater_recycling,
         project.pipeline_added,
+        project.parcel_geojson,
     )
 
     return {"message": "Simulation started", "project_id": project_id}
