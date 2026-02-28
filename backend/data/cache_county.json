@@ -6,6 +6,7 @@
 
   "supply": {
     "total_baseline_acre_feet_per_year": 262000,
+    "development_allocation_acre_feet_per_year": 1500,
     "annual_trend_rate": -0.004,
     "sources": [
       {
@@ -101,8 +102,8 @@
       "notes": "Reduces indoor municipal demand by 28%. Does not affect agricultural demand."
     },
     "pipeline_addition": {
-      "supply_increase_acre_feet_per_year": 5000,
-      "notes": "Represents a supplemental inter-basin transfer or new storage connection."
+      "supply_increase_acre_feet_per_year": 500,
+      "notes": "Represents a supplemental well or water rights purchase adding to the development allocation."
     },
     "unit_count_reduction": {
       "notes": "Each 1% reduction in units reduces municipal demand by 1%. Applied before simulation run."
