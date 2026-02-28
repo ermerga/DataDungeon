@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import VerdictBadge from '../components/VerdictBadge'
 import SupplyDemandChart from '../components/SupplyDemandChart'
+import LeverPanel from '../components/LeverPanel'
+import AgentCard from '../components/AgentCard'
 
 const POLL_INTERVAL_MS = 2000
 
@@ -13,22 +15,39 @@ const SCENARIO_LABELS = {
   reduced_snowpack: 'Reduced Snowpack (-29% snowpack)',
 }
 
+const DEFAULT_LEVERS = {
+  unit_reduction_pct: 0.0,
+  greywater_recycling: false,
+  pipeline_added: false,
+  build_delay_years: 0,
+}
+
 export default function Results() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [status, setStatus]   = useState('running')  // pending | running | complete | failed
+  // Simulation polling
+  const [status, setStatus]   = useState('running')
   const [results, setResults] = useState(null)
   const [project, setProject] = useState(null)
   const [error, setError]     = useState(null)
-
   const intervalRef = useRef(null)
+
+  // What-if
+  const [levers, setLevers]           = useState(DEFAULT_LEVERS)
+  const [whatIfResult, setWhatIfResult] = useState(null)
+  const [whatIfLoading, setWhatIfLoading] = useState(false)
+
+  // AI recommendations
+  const [recommendations, setRecommendations] = useState(null)
+  const [recsLoading, setRecsLoading]         = useState(false)
+  const [recsError, setRecsError]             = useState(null)
 
   // Fetch project details for the header
   useEffect(() => {
     api.get(`/projects/${id}`)
       .then(res => setProject(res.data))
-      .catch(() => {}) // non-critical — page still works without it
+      .catch(() => {})
   }, [id])
 
   // Poll for simulation results
@@ -38,7 +57,6 @@ export default function Results() {
         const res = await api.get(`/projects/${id}/results`)
         const { status: s, results: r } = res.data
         setStatus(s)
-
         if (s === 'complete') {
           setResults(r)
           clearInterval(intervalRef.current)
@@ -46,39 +64,77 @@ export default function Results() {
           setError('The simulation encountered an error. Please try again.')
           clearInterval(intervalRef.current)
         }
-      } catch (err) {
+      } catch {
         setError('Could not reach the backend. Is it running?')
         clearInterval(intervalRef.current)
       }
     }
-
-    poll() // run immediately on mount
+    poll()
     intervalRef.current = setInterval(poll, POLL_INTERVAL_MS)
     return () => clearInterval(intervalRef.current)
   }, [id])
 
+  // Debounced what-if re-simulation when levers change
+  useEffect(() => {
+    if (status !== 'complete') return
+
+    const hasChanges =
+      levers.unit_reduction_pct > 0 ||
+      levers.greywater_recycling ||
+      levers.pipeline_added ||
+      levers.build_delay_years > 0
+
+    if (!hasChanges) {
+      setWhatIfResult(null)
+      return
+    }
+
+    setWhatIfLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.patch(`/projects/${id}/whatif`, levers)
+        setWhatIfResult(res.data)
+      } catch (err) {
+        console.error('What-if error:', err)
+      } finally {
+        setWhatIfLoading(false)
+      }
+    }, 400)
+
+    return () => clearTimeout(timer)
+  }, [levers, status, id])
+
+  const fetchRecommendations = async () => {
+    setRecsLoading(true)
+    setRecsError(null)
+    try {
+      const res = await api.post(`/projects/${id}/recommend`)
+      setRecommendations(res.data)
+    } catch (err) {
+      setRecsError(err.response?.data?.detail || 'Failed to get recommendations.')
+    } finally {
+      setRecsLoading(false)
+    }
+  }
+
   // -------------------------------------------------------------------------
-  // Loading screen
+  // Loading / error screen
   // -------------------------------------------------------------------------
 
   if (status !== 'complete') {
     return (
       <div style={styles.loadingScreen}>
         {error ? (
-          <div style={styles.errorBox}>
-            <div style={styles.errorTitle}>Something went wrong</div>
-            <div style={styles.errorText}>{error}</div>
-            <button style={styles.backBtn} onClick={() => navigate('/app')}>
-              Back to New Project
-            </button>
+          <div style={styles.loadingCard}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#dc2626', marginBottom: 12 }}>Something went wrong</div>
+            <div style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>{error}</div>
+            <button style={styles.backBtn} onClick={() => navigate('/app')}>Back to New Project</button>
           </div>
         ) : (
           <div style={styles.loadingCard}>
             <div style={styles.spinner} />
             <h2 style={styles.loadingTitle}>Running Simulation</h2>
-            <p style={styles.loadingText}>
-              Running 1,000 climate scenarios over 50 years...
-            </p>
+            <p style={styles.loadingText}>Running 1,000 climate scenarios over 50 years...</p>
             <p style={styles.loadingText}>This usually takes a few seconds.</p>
           </div>
         )}
@@ -87,7 +143,7 @@ export default function Results() {
   }
 
   // -------------------------------------------------------------------------
-  // Results screen
+  // Results
   // -------------------------------------------------------------------------
 
   const {
@@ -102,15 +158,17 @@ export default function Results() {
 
   const isFail = verdict === 'FAIL'
 
+  // Use what-if results for the live verdict/stats if levers are active
+  const displayed = whatIfResult || results
+  const isLive    = !!whatIfResult
+
   return (
     <div style={styles.page}>
       <div style={styles.content}>
 
         {/* Header */}
         <div style={styles.header}>
-          <button style={styles.backBtn} onClick={() => navigate('/app')}>
-            ← New Project
-          </button>
+          <button style={styles.backBtn} onClick={() => navigate('/app')}>← New Project</button>
           {project && (
             <div style={styles.projectMeta}>
               <span style={styles.projectName}>{project.project_name}</span>
@@ -123,34 +181,41 @@ export default function Results() {
           )}
         </div>
 
-        {/* Verdict */}
-        <VerdictBadge verdict={verdict} />
+        {/* Verdict — updates live when levers change */}
+        {isLive && (
+          <div style={styles.liveTag}>
+            {whatIfLoading ? 'Recalculating...' : 'Live what-if result'}
+          </div>
+        )}
+        <VerdictBadge verdict={displayed.verdict} />
 
         {/* Stats row */}
         <div style={styles.statsRow}>
           <StatCard
-            label={`P(Failure by ${simulation_end_year})`}
-            value={`${(p_failure_by_end_year * 100).toFixed(1)}%`}
+            label={`P(Failure by ${displayed.simulation_end_year})`}
+            value={`${(displayed.p_failure_by_end_year * 100).toFixed(1)}%`}
             sub="15% = pass threshold"
-            highlight={isFail}
+            highlight={displayed.verdict === 'FAIL'}
           />
           <StatCard
             label="First Failure Year"
-            value={first_failure_year ?? 'None'}
-            sub={first_failure_year ? 'median across failed runs' : 'no failures detected'}
+            value={displayed.first_failure_year ?? 'None'}
+            sub={displayed.first_failure_year ? 'median across failed runs' : 'no failures detected'}
           />
           <StatCard
             label="Median Deficit"
-            value={median_deficit_acre_feet ? `${median_deficit_acre_feet.toLocaleString()} AF/yr` : 'None'}
-            sub={median_deficit_acre_feet ? 'acre-feet per year' : 'no deficit recorded'}
+            value={displayed.median_deficit_acre_feet
+              ? `${displayed.median_deficit_acre_feet.toLocaleString()} AF/yr`
+              : 'None'}
+            sub={displayed.median_deficit_acre_feet ? 'acre-feet per year' : 'no deficit recorded'}
           />
         </div>
 
-        {/* Failure curve chart */}
-        <SupplyDemandChart failureCurve={failure_curve} />
+        {/* Chart — updates live */}
+        <SupplyDemandChart failureCurve={displayed.failure_curve} />
 
-        {/* Scenario results */}
-        <div style={styles.scenarioCard}>
+        {/* Scenario results — always shows original */}
+        <div style={styles.card}>
           <h3 style={styles.sectionTitle}>Fixed Climate Scenarios</h3>
           <div style={styles.scenarioGrid}>
             {Object.entries(SCENARIO_LABELS).map(([key, label]) => {
@@ -163,16 +228,70 @@ export default function Results() {
                     ...styles.scenarioBadge,
                     background: pass ? '#dcfce7' : '#fee2e2',
                     color: pass ? '#16a34a' : '#dc2626',
-                  }}>
-                    {r}
-                  </span>
+                  }}>{r}</span>
                 </div>
               )
             })}
           </div>
         </div>
 
-        {/* Action buttons */}
+        {/* ------------------------------------------------------------------ */}
+        {/* What-If section                                                     */}
+        {/* ------------------------------------------------------------------ */}
+
+        <div style={styles.divider}>
+          <div style={styles.dividerLine} />
+          <span style={styles.dividerLabel}>What-If Scenarios</span>
+          <div style={styles.dividerLine} />
+        </div>
+
+        <LeverPanel levers={levers} onChange={setLevers} />
+
+        {/* AI Recommendations */}
+        {isFail && (
+          <div style={styles.card}>
+            <div style={styles.recsHeader}>
+              <div>
+                <h3 style={styles.sectionTitle}>AI Recommendations</h3>
+                <p style={styles.sectionSub}>
+                  Claude will suggest lever combinations and verify each one with the real simulation.
+                </p>
+              </div>
+              {!recommendations && (
+                <button
+                  onClick={fetchRecommendations}
+                  disabled={recsLoading}
+                  style={{ ...styles.recsBtn, opacity: recsLoading ? 0.6 : 1 }}
+                >
+                  {recsLoading ? 'Analyzing...' : 'Get Recommendations'}
+                </button>
+              )}
+            </div>
+
+            {recsError && <div style={styles.recsError}>{recsError}</div>}
+
+            {recommendations && (
+              <div style={styles.recsList}>
+                {recommendations.unfixable && (
+                  <div style={styles.unfixableBox}>
+                    <strong>No fix found:</strong> {recommendations.unfixable_reason}
+                  </div>
+                )}
+                {recommendations.recommendations.map(rec => (
+                  <AgentCard key={rec.rank} recommendation={rec} />
+                ))}
+                <button
+                  onClick={() => { setRecommendations(null) }}
+                  style={styles.refreshBtn}
+                >
+                  Refresh Recommendations
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Download report */}
         <div style={styles.actions}>
           <a
             href={`http://localhost:8000/projects/${id}/report`}
@@ -182,14 +301,6 @@ export default function Results() {
           >
             Download Report (PDF)
           </a>
-          {isFail && (
-            <button
-              style={styles.whatifBtn}
-              onClick={() => navigate(`/projects/${id}/whatif`)}
-            >
-              Explore What-If Scenarios →
-            </button>
-          )}
         </div>
 
       </div>
@@ -205,12 +316,7 @@ function StatCard({ label, value, sub, highlight }) {
       background: highlight ? '#fff5f5' : 'white',
     }}>
       <div style={styles.statLabel}>{label}</div>
-      <div style={{
-        ...styles.statValue,
-        color: highlight ? '#dc2626' : '#001233',
-      }}>
-        {value}
-      </div>
+      <div style={{ ...styles.statValue, color: highlight ? '#dc2626' : '#001233' }}>{value}</div>
       <div style={styles.statSub}>{sub}</div>
     </div>
   )
@@ -221,195 +327,90 @@ function StatCard({ label, value, sub, highlight }) {
 // -------------------------------------------------------------------------
 
 const styles = {
-  // Loading
   loadingScreen: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    background: '#f8fafc',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    height: '100vh', background: '#f8fafc',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   },
   loadingCard: {
-    background: 'white',
-    borderRadius: 16,
-    padding: '48px 64px',
-    textAlign: 'center',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-    maxWidth: 400,
+    background: 'white', borderRadius: 16, padding: '48px 64px',
+    textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', maxWidth: 400,
   },
   spinner: {
-    width: 48,
-    height: 48,
-    border: '4px solid #e2e8f0',
-    borderTop: '4px solid #002855',
-    borderRadius: '50%',
-    animation: 'spin 0.9s linear infinite',
+    width: 48, height: 48,
+    border: '4px solid #e2e8f0', borderTop: '4px solid #002855',
+    borderRadius: '50%', animation: 'spin 0.9s linear infinite',
     margin: '0 auto 24px auto',
   },
-  loadingTitle: {
-    margin: '0 0 12px 0',
-    fontSize: 22,
-    fontWeight: 700,
-    color: '#001233',
-  },
-  loadingText: {
-    margin: '4px 0',
-    color: '#64748b',
-    fontSize: 14,
-  },
-  errorBox: {
-    background: 'white',
-    borderRadius: 16,
-    padding: '48px 64px',
-    textAlign: 'center',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-    maxWidth: 400,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: '#dc2626',
-    marginBottom: 12,
-  },
-  errorText: {
-    color: '#64748b',
-    fontSize: 14,
-    marginBottom: 24,
-  },
-  // Results page
+  loadingTitle: { margin: '0 0 12px 0', fontSize: 22, fontWeight: 700, color: '#001233' },
+  loadingText:  { margin: '4px 0', color: '#64748b', fontSize: 14 },
+
   page: {
-    minHeight: '100vh',
-    background: '#f8fafc',
+    minHeight: '100vh', background: '#f8fafc', padding: '32px 24px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    padding: '32px 24px',
   },
-  content: {
-    maxWidth: 860,
-    margin: '0 auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 24,
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 20,
-  },
+  content: { maxWidth: 860, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 },
+
+  header: { display: 'flex', alignItems: 'center', gap: 20 },
   backBtn: {
-    padding: '8px 16px',
-    fontSize: 14,
-    fontWeight: 500,
-    color: '#002855',
-    background: 'white',
-    border: '1px solid #e2e8f0',
-    borderRadius: 8,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    textDecoration: 'none',
+    padding: '8px 16px', fontSize: 14, fontWeight: 500,
+    color: '#002855', background: 'white', border: '1px solid #e2e8f0',
+    borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', textDecoration: 'none',
   },
-  projectMeta: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
+  projectMeta:  { display: 'flex', flexDirection: 'column', gap: 2 },
+  projectName:  { fontSize: 20, fontWeight: 700, color: '#001233' },
+  projectSub:   { fontSize: 13, color: '#64748b' },
+
+  liveTag: {
+    fontSize: 12, fontWeight: 600, color: '#002855',
+    background: '#eff6ff', border: '1px solid #bfdbfe',
+    borderRadius: 6, padding: '4px 10px', alignSelf: 'flex-start',
   },
-  projectName: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: '#001233',
+
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 },
+  statCard:  { borderRadius: 12, padding: '16px 20px' },
+  statLabel: { fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  statValue: { fontSize: 28, fontWeight: 700, lineHeight: 1, marginBottom: 4 },
+  statSub:   { fontSize: 12, color: '#94a3b8' },
+
+  card: { background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px 24px' },
+  sectionTitle: { margin: '0 0 4px 0', fontSize: 16, fontWeight: 600, color: '#001233' },
+  sectionSub:   { margin: 0, fontSize: 13, color: '#64748b' },
+
+  scenarioGrid: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 },
+  scenarioRow:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: 8 },
+  scenarioLabel: { fontSize: 14, color: '#334155' },
+  scenarioBadge: { fontSize: 13, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: 0.5 },
+
+  divider: { display: 'flex', alignItems: 'center', gap: 12 },
+  dividerLine:  { flex: 1, height: 1, background: '#e2e8f0' },
+  dividerLabel: { fontSize: 13, fontWeight: 600, color: '#94a3b8', whiteSpace: 'nowrap' },
+
+  recsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 },
+  recsBtn: {
+    padding: '10px 20px', fontSize: 14, fontWeight: 600,
+    color: 'white', background: '#002855', border: 'none',
+    borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
   },
-  projectSub: {
-    fontSize: 13,
-    color: '#64748b',
+  recsError: {
+    marginTop: 12, padding: '10px 14px', background: '#fee2e2',
+    color: '#dc2626', borderRadius: 8, fontSize: 13,
   },
-  statsRow: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: 16,
+  recsList:    { display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 },
+  unfixableBox: {
+    padding: '12px 16px', background: '#fef3c7', color: '#92400e',
+    borderRadius: 8, fontSize: 13, border: '1px solid #fde68a',
   },
-  statCard: {
-    borderRadius: 12,
-    padding: '16px 20px',
+  refreshBtn: {
+    alignSelf: 'flex-start', padding: '8px 16px', fontSize: 13,
+    color: '#64748b', background: 'white', border: '1px solid #e2e8f0',
+    borderRadius: 8, cursor: 'pointer',
   },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  statValue: {
-    fontSize: 28,
-    fontWeight: 700,
-    lineHeight: 1,
-    marginBottom: 4,
-  },
-  statSub: {
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  scenarioCard: {
-    background: 'white',
-    border: '1px solid #e2e8f0',
-    borderRadius: 12,
-    padding: '20px 24px',
-  },
-  sectionTitle: {
-    margin: '0 0 16px 0',
-    fontSize: 16,
-    fontWeight: 600,
-    color: '#001233',
-  },
-  scenarioGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-  },
-  scenarioRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px 14px',
-    background: '#f8fafc',
-    borderRadius: 8,
-  },
-  scenarioLabel: {
-    fontSize: 14,
-    color: '#334155',
-  },
-  scenarioBadge: {
-    fontSize: 13,
-    fontWeight: 700,
-    padding: '3px 12px',
-    borderRadius: 20,
-    letterSpacing: 0.5,
-  },
-  actions: {
-    display: 'flex',
-    gap: 12,
-    paddingBottom: 32,
-  },
+
+  actions:   { paddingBottom: 32 },
   reportBtn: {
-    padding: '12px 24px',
-    fontSize: 15,
-    fontWeight: 600,
-    color: '#002855',
-    background: 'white',
-    border: '1px solid #002855',
-    borderRadius: 8,
-    cursor: 'pointer',
-    textDecoration: 'none',
-    display: 'inline-block',
-  },
-  whatifBtn: {
-    padding: '12px 24px',
-    fontSize: 15,
-    fontWeight: 600,
-    color: 'white',
-    background: '#002855',
-    border: 'none',
-    borderRadius: 8,
-    cursor: 'pointer',
+    padding: '12px 24px', fontSize: 15, fontWeight: 600,
+    color: '#002855', background: 'white', border: '1px solid #002855',
+    borderRadius: 8, cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
   },
 }
