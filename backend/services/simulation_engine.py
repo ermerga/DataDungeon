@@ -33,16 +33,15 @@ with open(DATA_PATH) as f:
 # Constants
 # ---------------------------------------------------------------------------
 
-SIMULATION_START = 2025
-SIMULATION_END = 2074
-SIMULATION_YEARS = list(range(SIMULATION_START, SIMULATION_END + 1))
+SIMULATION_HORIZON = 50    # years — simulation always runs for this many years from build_year
+TREND_BASELINE_YEAR = 2026 # supply trend accumulates from this year regardless of build_year
 
 N_SIMULATIONS = 1000
 
 GREYWATER_DEMAND_REDUCTION = 0.28  # EPA WaterSense standard — removes 28% of municipal demand
 PIPELINE_SUPPLY_ADDITION = 500     # acre-feet per year — supplemental well or water rights purchase
 
-# If P(failure by 2074) exceeds this threshold the project verdict is FAIL
+# If P(failure by end year) exceeds this threshold the project verdict is FAIL
 FAIL_THRESHOLD = 0.15
 
 
@@ -80,6 +79,13 @@ def run_simulation(
     effective_build_year = build_year + build_delay_years
     demand_multiplier = (1.0 - GREYWATER_DEMAND_REDUCTION) if greywater_recycling else 1.0
 
+    # Build the simulation window: 50 years starting from the build year.
+    # The supply trend is indexed from TREND_BASELINE_YEAR (2026) so that a project
+    # built in 2035 correctly inherits 9 years of accumulated supply decline.
+    simulation_start = effective_build_year
+    simulation_end = effective_build_year + SIMULATION_HORIZON - 1
+    simulation_years = list(range(simulation_start, simulation_end + 1))
+
     # Pull values from county data
     # development_allocation is the water reserved for new growth — not total county supply
     development_allocation = COUNTY_DATA["supply"]["development_allocation_acre_feet_per_year"]
@@ -98,9 +104,10 @@ def run_simulation(
         modifier = scenarios[key]["supply_modifier"]
         scenario_failed = False
 
-        for i, year in enumerate(SIMULATION_YEARS):
-            # Available allocation shrinks with drought modifier and long-term trend
-            available = development_allocation * modifier * (1 + annual_trend) ** i
+        for year in simulation_years:
+            # Trend counts from the baseline year — not from the simulation start
+            years_of_trend = year - TREND_BASELINE_YEAR
+            available = development_allocation * modifier * (1 + annual_trend) ** years_of_trend
             if pipeline_added:
                 available += PIPELINE_SUPPLY_ADDITION
 
@@ -122,7 +129,7 @@ def run_simulation(
     # When a simulation fails at year X, we increment every year from X onward.
     # Dividing by n_simulations gives P(failure by that year).
 
-    failure_counts = [0] * len(SIMULATION_YEARS)
+    failure_counts = [0] * len(simulation_years)
     simulation_outcomes = []
 
     for _ in range(n_simulations):
@@ -137,11 +144,12 @@ def run_simulation(
         first_failure_year = None
         deficit_at_failure = None
 
-        for i, year in enumerate(SIMULATION_YEARS):
+        for i, year in enumerate(simulation_years):
             # Sample a supply shock — lognormal centered at 1.0
             # sigma=0.11 reflects year-to-year variability in Bear River flows
             supply_shock = float(np.random.lognormal(mean=0, sigma=mc_supply["sigma"]))
-            available = development_allocation * supply_shock * (1 + annual_trend) ** i
+            years_of_trend = year - TREND_BASELINE_YEAR
+            available = development_allocation * supply_shock * (1 + annual_trend) ** years_of_trend
 
             if pipeline_added:
                 available += PIPELINE_SUPPLY_ADDITION
@@ -155,7 +163,7 @@ def run_simulation(
                 first_failure_year = year
                 deficit_at_failure = demand - available
 
-                for j in range(i, len(SIMULATION_YEARS)):
+                for j in range(i, len(simulation_years)):
                     failure_counts[j] += 1
                 break
 
@@ -167,11 +175,11 @@ def run_simulation(
 
     # --- Step 4: Build the output ---
 
-    p_failure_by_2074 = failure_counts[-1] / n_simulations
+    p_failure_by_end_year = failure_counts[-1] / n_simulations
 
     failure_curve = [
         {"year": year, "p_failure": round(failure_counts[i] / n_simulations, 4)}
-        for i, year in enumerate(SIMULATION_YEARS)
+        for i, year in enumerate(simulation_years)
     ]
 
     failed_sims = [s for s in simulation_outcomes if s["failed"]]
@@ -185,11 +193,12 @@ def run_simulation(
         deficits = sorted(s["deficit"] for s in failed_sims)
         median_deficit = round(deficits[len(deficits) // 2], 1)
 
-    verdict = "FAIL" if p_failure_by_2074 > FAIL_THRESHOLD else "PASS"
+    verdict = "FAIL" if p_failure_by_end_year > FAIL_THRESHOLD else "PASS"
 
     return {
         "verdict": verdict,
-        "p_failure_by_2074": round(p_failure_by_2074, 4),
+        "p_failure_by_end_year": round(p_failure_by_end_year, 4),
+        "simulation_end_year": simulation_end,
         "first_failure_year": first_failure_year,
         "median_deficit_acre_feet": median_deficit,
         "failure_curve": failure_curve,
