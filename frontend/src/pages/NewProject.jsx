@@ -39,10 +39,12 @@ export default function NewProject() {
     setError(null)
     try {
       const { data: project } = await api.post('/projects', {
-        project_name: projectName,
+        name: projectName,
         unit_count: parseInt(unitCount),
         build_year: parseInt(buildYear),
-        parcel_geojson: parcel
+        parcel_geojson: parcel,
+        greywater_recycling: greywaterRecycling,
+        pipeline_added: pipelineAdded ?? false,
       })
       await api.post(`/projects/${project.id}/simulate`)
       navigate(`/projects/${project.id}/results`, {
