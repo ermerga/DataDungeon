@@ -286,8 +286,17 @@ export default function Results() {
                 <button
                   onClick={fetchRecommendations}
                   disabled={recsLoading}
-                  style={{ ...styles.recsBtn, opacity: recsLoading ? 0.6 : 1 }}
+                  style={{ ...styles.recsBtn, opacity: recsLoading ? 0.75 : 1, display: 'flex', alignItems: 'center', gap: 8 }}
                 >
+                  {recsLoading && (
+                    <span style={{
+                      width: 14, height: 14, borderRadius: '50%',
+                      border: '2px solid rgba(255,255,255,0.35)',
+                      borderTopColor: '#ffffff',
+                      animation: 'spin 0.7s linear infinite',
+                      flexShrink: 0,
+                    }} />
+                  )}
                   {recsLoading ? 'Analyzing...' : 'Get Recommendations'}
                 </button>
               )}
