@@ -103,7 +103,7 @@ export default function NewProject() {
 
           <div style={s.stepIndicator}>Step {step} of {TOTAL_STEPS}</div>
 
-          {step >= 2 && step <= 3 && (
+          {step >= 2 && step <= 5 && !isSubmitting && (
             <button onClick={() => setStep(step - 1)} style={s.backBtn}><span style={{ position: 'relative', top: '-2px', marginRight: '3px' }}>←</span>Back</button>
           )}
 
