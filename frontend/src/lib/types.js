@@ -1,4 +1,4 @@
-// DataDungeon — Shared API Types (JSDoc)
+// Thallo — Shared API Types (JSDoc)
 // These match the Pydantic schemas in backend/schemas/ exactly.
 // Use these as @param and @type annotations throughout the frontend.
 

@@ -55,7 +55,7 @@ export default function ParcelMap({ onParcelDrawn }) {
         type: 'fill',
         source: 'parcel',
         paint: {
-          'fill-color': '#3b82f6',
+          'fill-color': '#33415C',
           'fill-opacity': 0.3
         }
       })
@@ -66,7 +66,7 @@ export default function ParcelMap({ onParcelDrawn }) {
         type: 'line',
         source: 'parcel',
         paint: {
-          'line-color': '#2563eb',
+          'line-color': '#979DAC',
           'line-width': 3
         }
       })
@@ -91,7 +91,7 @@ export default function ParcelMap({ onParcelDrawn }) {
       setPointCount(drawingPoints.current.length)
 
       // Add draggable marker at click point
-      const marker = new mapboxgl.Marker({ color: '#2563eb', scale: 0.7, draggable: true })
+      const marker = new mapboxgl.Marker({ color: '#33415C', scale: 0.7, draggable: true })
         .setLngLat([lng, lat])
         .addTo(map.current)
 
@@ -145,8 +145,8 @@ export default function ParcelMap({ onParcelDrawn }) {
         position: 'absolute',
         top: 12,
         left: 12,
-        background: 'rgba(0,0,0,0.75)',
-        color: 'white',
+        background: 'rgba(0,18,51,0.85)',
+        color: '#FFFFFF',
         padding: '10px 14px',
         borderRadius: 8,
         fontSize: 13,
@@ -164,15 +164,15 @@ export default function ParcelMap({ onParcelDrawn }) {
             position: 'absolute',
             bottom: 16,
             right: 16,
-            background: '#ef4444',
-            color: 'white',
+            background: '#33415C',
+            color: '#FFFFFF',
             border: 'none',
             padding: '10px 20px',
             borderRadius: 8,
             cursor: 'pointer',
             fontWeight: 600,
             fontSize: 14,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+            boxShadow: '0 2px 8px rgba(0,18,51,0.5)'
           }}
         >
           Clear Drawing

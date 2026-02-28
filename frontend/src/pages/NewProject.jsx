@@ -2,8 +2,17 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ParcelMap from '../components/ParcelMap'
 import api from '../lib/api'
+import { logout } from '../lib/auth'
 
 const TOTAL_STEPS = 5
+
+const C = {
+  deep:     '#001233',
+  navy:     '#002855',
+  twilight: '#33415C',
+  muted:    '#979DAC',
+  white:    '#FFFFFF',
+}
 
 export default function NewProject() {
   const navigate = useNavigate()
@@ -20,7 +29,6 @@ export default function NewProject() {
   const nameRef = useRef(null)
   const unitRef = useRef(null)
 
-  // Autofocus the input when a new step becomes active
   useEffect(() => {
     if (step === 1) nameRef.current?.focus()
     if (step === 2) unitRef.current?.focus()
@@ -37,7 +45,6 @@ export default function NewProject() {
         parcel_geojson: parcel
       })
       await api.post(`/projects/${project.id}/simulate`)
-      // Pass initial lever values to results page so WhatIf can pre-populate them
       navigate(`/projects/${project.id}/results`, {
         state: { pipelineAdded, greywaterRecycling }
       })
@@ -48,9 +55,7 @@ export default function NewProject() {
     }
   }
 
-  const handleGreywater = (value) => {
-    handleSubmit(value)
-  }
+  const handleGreywater = (value) => handleSubmit(value)
 
   const handlePipeline = (value) => {
     setPipelineAdded(value)
@@ -59,16 +64,16 @@ export default function NewProject() {
 
   return (
     <div style={s.container}>
-      {/* Map — always fills remaining space */}
+      <button onClick={() => { logout(); navigate('/') }} style={s.logoutBtn}>
+        Sign Out
+      </button>
+
+      {/* Map */}
       <div style={s.mapWrap}>
         <ParcelMap onParcelDrawn={setParcel} />
 
-        {/* Continue button floats over the map at step 0, appears once parcel is ready */}
         {step === 0 && parcel && (
-          <button
-            onClick={() => setStep(1)}
-            style={s.continueBtn}
-          >
+          <button onClick={() => setStep(1)} style={s.continueBtn}>
             Continue →
           </button>
         )}
@@ -78,17 +83,13 @@ export default function NewProject() {
       <div style={{ ...s.panel, width: step >= 1 ? 380 : 0 }}>
         <div style={s.panelInner}>
 
-          {/* Step indicator */}
           <div style={s.stepIndicator}>Step {step} of {TOTAL_STEPS}</div>
 
-          {/* Back link for steps 2 and 3 */}
           {step >= 2 && step <= 3 && (
-            <button onClick={() => setStep(step - 1)} style={s.backBtn}>
-              ← Back
-            </button>
+            <button onClick={() => setStep(step - 1)} style={s.backBtn}>← Back</button>
           )}
 
-          {/* ── Step 1: Project Name ── */}
+          {/* Step 1: Name */}
           {step === 1 && (
             <div style={s.stepContent}>
               <h2 style={s.stepTitle}>What's the project name?</h2>
@@ -104,14 +105,14 @@ export default function NewProject() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!projectName.trim()}
-                style={{ ...s.nextBtn, opacity: projectName.trim() ? 1 : 0.4 }}
+                style={{ ...s.nextBtn, opacity: projectName.trim() ? 1 : 0.35 }}
               >
                 Next →
               </button>
             </div>
           )}
 
-          {/* ── Step 2: Number of Homes ── */}
+          {/* Step 2: Homes */}
           {step === 2 && (
             <div style={s.stepContent}>
               <h2 style={s.stepTitle}>How many homes?</h2>
@@ -129,14 +130,14 @@ export default function NewProject() {
               <button
                 onClick={() => setStep(3)}
                 disabled={!unitCount || parseInt(unitCount) < 1}
-                style={{ ...s.nextBtn, opacity: unitCount && parseInt(unitCount) >= 1 ? 1 : 0.4 }}
+                style={{ ...s.nextBtn, opacity: unitCount && parseInt(unitCount) >= 1 ? 1 : 0.35 }}
               >
                 Next →
               </button>
             </div>
           )}
 
-          {/* ── Step 3: Build Year ── */}
+          {/* Step 3: Build Year */}
           {step === 3 && (
             <div style={s.stepContent}>
               <h2 style={s.stepTitle}>When will you break ground?</h2>
@@ -149,16 +150,11 @@ export default function NewProject() {
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
-              <button
-                onClick={() => setStep(4)}
-                style={s.nextBtn}
-              >
-                Next →
-              </button>
+              <button onClick={() => setStep(4)} style={s.nextBtn}>Next →</button>
             </div>
           )}
 
-          {/* ── Step 4: Pipeline ── */}
+          {/* Step 4: Pipeline */}
           {step === 4 && (
             <div style={s.stepContent}>
               <h2 style={s.stepTitle}>Are you planning to add a water pipeline?</h2>
@@ -170,7 +166,7 @@ export default function NewProject() {
             </div>
           )}
 
-          {/* ── Step 5: Greywater ── */}
+          {/* Step 5: Greywater */}
           {step === 5 && (
             <div style={s.stepContent}>
               <h2 style={s.stepTitle}>Planning greywater recycling?</h2>
@@ -192,9 +188,7 @@ export default function NewProject() {
                   {isSubmitting ? '...' : 'No'}
                 </button>
               </div>
-              {isSubmitting && (
-                <p style={s.submittingText}>Running simulation…</p>
-              )}
+              {isSubmitting && <p style={s.submittingText}>Running simulation…</p>}
             </div>
           )}
 
@@ -216,25 +210,40 @@ const s = {
     minWidth: 0,
     position: 'relative'
   },
+  logoutBtn: {
+    position: 'fixed',
+    top: 12,
+    right: 16,
+    background: 'rgba(0,18,51,0.8)',
+    color: C.muted,
+    border: `1px solid rgba(151,157,172,0.2)`,
+    padding: '8px 16px',
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    zIndex: 20,
+    backdropFilter: 'blur(4px)'
+  },
   continueBtn: {
     position: 'absolute',
     bottom: 80,
     right: 16,
-    background: '#2563eb',
-    color: 'white',
+    background: C.twilight,
+    color: C.white,
     border: 'none',
     padding: '12px 24px',
     borderRadius: 8,
     fontSize: 15,
     fontWeight: 600,
     cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(37,99,235,0.4)',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
     zIndex: 10
   },
   panel: {
     flexShrink: 0,
-    background: '#f8fafc',
-    borderLeft: '1px solid #e2e8f0',
+    background: C.navy,
+    borderLeft: `1px solid rgba(151,157,172,0.15)`,
     overflow: 'hidden',
     transition: 'width 0.35s ease',
     display: 'flex',
@@ -251,7 +260,7 @@ const s = {
   stepIndicator: {
     fontSize: 12,
     fontWeight: 600,
-    color: '#94a3b8',
+    color: C.muted,
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     marginBottom: 24
@@ -259,7 +268,7 @@ const s = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#64748b',
+    color: C.muted,
     fontSize: 14,
     cursor: 'pointer',
     padding: 0,
@@ -276,22 +285,23 @@ const s = {
     margin: 0,
     fontSize: 22,
     fontWeight: 700,
-    color: '#0f172a',
+    color: C.white,
     lineHeight: 1.3
   },
   stepSubtitle: {
     margin: 0,
     fontSize: 14,
-    color: '#64748b',
+    color: C.muted,
     lineHeight: 1.5
   },
   input: {
     padding: '13px 14px',
     fontSize: 16,
-    border: '1px solid #d1d5db',
+    border: `1px solid rgba(151,157,172,0.25)`,
     borderRadius: 8,
     outline: 'none',
-    background: 'white',
+    background: C.twilight,
+    color: C.white,
     width: '100%',
     boxSizing: 'border-box'
   },
@@ -299,8 +309,8 @@ const s = {
     padding: '14px 24px',
     fontSize: 16,
     fontWeight: 600,
-    color: 'white',
-    background: '#2563eb',
+    color: C.white,
+    background: C.twilight,
     border: 'none',
     borderRadius: 8,
     cursor: 'pointer',
@@ -316,8 +326,8 @@ const s = {
     padding: '18px',
     fontSize: 18,
     fontWeight: 600,
-    color: 'white',
-    background: '#16a34a',
+    color: C.white,
+    background: C.twilight,
     border: 'none',
     borderRadius: 8,
     cursor: 'pointer'
@@ -327,22 +337,23 @@ const s = {
     padding: '18px',
     fontSize: 18,
     fontWeight: 600,
-    color: 'white',
-    background: '#64748b',
-    border: 'none',
+    color: C.muted,
+    background: C.deep,
+    border: `1px solid rgba(151,157,172,0.2)`,
     borderRadius: 8,
     cursor: 'pointer'
   },
   error: {
-    background: '#fef2f2',
-    color: '#dc2626',
+    background: 'rgba(220,38,38,0.15)',
+    color: '#fca5a5',
     padding: '12px 16px',
     borderRadius: 8,
-    fontSize: 14
+    fontSize: 14,
+    border: '1px solid rgba(220,38,38,0.3)'
   },
   submittingText: {
     margin: 0,
-    color: '#64748b',
+    color: C.muted,
     fontSize: 14,
     textAlign: 'center'
   }
