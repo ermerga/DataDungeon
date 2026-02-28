@@ -35,6 +35,7 @@ def whatif(project_id: int, body: WhatIfRequest, db: Session = Depends(get_db)):
         pipeline_added=body.pipeline_added,
         unit_reduction_pct=body.unit_reduction_pct,
         build_delay_years=body.build_delay_years,
+        parcel_geojson=project.parcel_geojson,
     )
 
     return results

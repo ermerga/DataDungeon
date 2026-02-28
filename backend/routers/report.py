@@ -57,6 +57,7 @@ def download_report(
             pipeline_added=pipeline_added,
             unit_reduction_pct=unit_reduction_pct,
             build_delay_years=build_delay_years,
+            parcel_geojson=project.parcel_geojson,
         )
         levers = {
             "unit_reduction_pct": unit_reduction_pct,
