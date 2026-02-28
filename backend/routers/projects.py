@@ -16,6 +16,8 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db)):
         unit_count=body.unit_count,
         build_year=body.build_year,
         parcel_geojson=body.parcel_geojson,
+        greywater_recycling=body.greywater_recycling,
+        pipeline_added=body.pipeline_added,
         status="pending",
     )
 

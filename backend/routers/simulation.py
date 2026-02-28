@@ -12,7 +12,13 @@ router = APIRouter(prefix="/projects", tags=["Simulation"])
 # Background task — runs after the route has already returned 202
 # ---------------------------------------------------------------------------
 
-def _run_simulation_task(project_id: int, unit_count: int, build_year: int):
+def _run_simulation_task(
+    project_id: int,
+    unit_count: int,
+    build_year: int,
+    greywater_recycling: bool,
+    pipeline_added: bool,
+):
     """
     Runs in the background after POST /simulate returns.
     Opens its own database session — the request session is already closed by the time
@@ -20,7 +26,12 @@ def _run_simulation_task(project_id: int, unit_count: int, build_year: int):
     """
     db = SessionLocal()
     try:
-        results = run_simulation(unit_count=unit_count, build_year=build_year)
+        results = run_simulation(
+            unit_count=unit_count,
+            build_year=build_year,
+            greywater_recycling=greywater_recycling,
+            pipeline_added=pipeline_added,
+        )
 
         project = db.query(Project).filter(Project.id == project_id).first()
         project.simulation_results = results
@@ -69,6 +80,8 @@ def start_simulation(
         project_id,
         project.unit_count,
         project.build_year,
+        project.greywater_recycling,
+        project.pipeline_added,
     )
 
     return {"message": "Simulation started", "project_id": project_id}

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, JSON
 from sqlalchemy.sql import func
 from db.connection import Base
 
@@ -23,6 +23,12 @@ class Project(Base):
     # The GeoJSON polygon the user drew on the map. Stored as JSON so we can
     # send it straight back to Mapbox on the frontend without any transformation.
     parcel_geojson = Column(JSON, nullable=False)
+
+    # Whether the developer is including greywater recycling (reduces demand 28%)
+    # or an additional pipeline/water-rights purchase (adds 500 AF/yr to supply).
+    # Set at project creation and used as the baseline for the initial simulation.
+    greywater_recycling = Column(Boolean, default=False, nullable=False)
+    pipeline_added = Column(Boolean, default=False, nullable=False)
 
     # Tracks where this project is in its lifecycle.
     # Flow: "pending" → "running" → "complete" (or "failed" if something breaks)

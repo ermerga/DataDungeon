@@ -10,6 +10,8 @@ class ProjectCreate(BaseModel):
     parcel_geojson: Dict[str, Any] = Field(
         description="GeoJSON Feature object with a Polygon geometry representing the parcel"
     )
+    greywater_recycling: bool = False
+    pipeline_added: bool = False
 
 
 class ProjectResponse(BaseModel):
@@ -18,6 +20,8 @@ class ProjectResponse(BaseModel):
     unit_count: int
     build_year: int
     parcel_geojson: Dict[str, Any]
+    greywater_recycling: bool
+    pipeline_added: bool
     status: str  # "pending" | "running" | "complete" | "failed"
     created_at: datetime
 
