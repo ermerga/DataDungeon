@@ -151,7 +151,7 @@ export default function Results() {
           <div style={styles.loadingCard}>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#dc2626', marginBottom: 12 }}>Something went wrong</div>
             <div style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>{error}</div>
-            <button style={styles.backBtn} onClick={() => navigate('/app')}>Back to New Project</button>
+            <button className="btn-outline" style={styles.backBtn} onClick={() => navigate('/app')}>Back to New Project</button>
           </div>
         ) : (
           <div style={styles.loadingCard}>
@@ -191,7 +191,7 @@ export default function Results() {
 
         {/* Header */}
         <div style={styles.header} className="fade-up">
-          <button style={styles.backBtn} onClick={() => navigate('/app')}><span style={{ position: 'relative', top: '-2px', marginRight: '3px' }}>←</span>New Project</button>
+          <button className="btn-outline" style={styles.backBtn} onClick={() => navigate('/app')}><span style={{ position: 'relative', top: '-2px', marginRight: '3px' }}>←</span>New Project</button>
           {project && (
             <div style={styles.projectMeta}>
               <span style={styles.projectName}>{project.project_name}</span>
@@ -364,7 +364,7 @@ function StatCard({ label, value, sub, highlight }) {
 const styles = {
   loadingScreen: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    height: '100vh', background: '#f8fafc',
+    height: '100vh', background: '#eef2f7',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   },
   loadingCard: {
@@ -381,7 +381,7 @@ const styles = {
   loadingText:  { margin: '4px 0', color: '#64748b', fontSize: 14 },
 
   page: {
-    minHeight: '100vh', background: '#f8fafc', padding: '32px 24px',
+    minHeight: '100vh', background: '#eef2f7', padding: '32px 24px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   },
   content: { maxWidth: 860, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 },
@@ -389,7 +389,7 @@ const styles = {
   header: { display: 'flex', alignItems: 'center', gap: 20 },
   backBtn: {
     padding: '8px 16px', fontSize: 14, fontWeight: 500,
-    color: '#002855', background: 'white', border: '1px solid #e2e8f0',
+    color: '#002855', background: 'white', border: '1px solid #002855',
     borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', textDecoration: 'none',
   },
   projectMeta:  { display: 'flex', flexDirection: 'column', gap: 2 },
@@ -413,7 +413,7 @@ const styles = {
   sectionSub:   { margin: 0, fontSize: 13, color: '#64748b' },
 
   scenarioGrid: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 },
-  scenarioRow:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: 8 },
+  scenarioRow:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#eef2f7', borderRadius: 8 },
   scenarioLabel: { fontSize: 14, color: '#334155' },
   scenarioBadge: { fontSize: 13, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: 0.5 },
 
@@ -445,7 +445,7 @@ const styles = {
   actions:   { paddingBottom: 32 },
   reportBtn: {
     padding: '12px 24px', fontSize: 15, fontWeight: 600,
-    color: '#002855', background: 'white', border: '1px solid #002855',
+    color: 'white', background: '#001233', border: 'none',
     borderRadius: 8, cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
   },
 }
