@@ -44,6 +44,18 @@ export default function Results() {
   const [recsLoading, setRecsLoading]         = useState(false)
   const [recsError, setRecsError]             = useState(null)
 
+  // Scroll-triggered fade-up (re-observe whenever results or recommendations render new elements)
+  useEffect(() => {
+    const els = document.querySelectorAll('.fade-up:not(.visible)')
+    if (!els.length) return
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target) } }),
+      { threshold: 0, rootMargin: '0px 0px -40px 0px' }
+    )
+    els.forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [results, recommendations])
+
   // Fetch project details for the header; seed levers from project's initial settings
   useEffect(() => {
     api.get(`/projects/${id}`)
@@ -175,11 +187,11 @@ export default function Results() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.content} className="page-fade-in">
+      <div style={styles.content}>
 
         {/* Header */}
-        <div style={styles.header}>
-          <button style={styles.backBtn} onClick={() => navigate('/app')}>← New Project</button>
+        <div style={styles.header} className="fade-up">
+          <button style={styles.backBtn} onClick={() => navigate('/app')}><span style={{ position: 'relative', top: '-2px', marginRight: '3px' }}>←</span>New Project</button>
           {project && (
             <div style={styles.projectMeta}>
               <span style={styles.projectName}>{project.project_name}</span>
@@ -198,10 +210,10 @@ export default function Results() {
             {whatIfLoading ? 'Recalculating...' : 'Live what-if result'}
           </div>
         )}
-        <VerdictBadge verdict={displayed.verdict} />
+        <div className="fade-up"><VerdictBadge verdict={displayed.verdict} /></div>
 
         {/* Stats row */}
-        <div style={{ ...styles.statsRow, animation: 'fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.12s both' }}>
+        <div style={styles.statsRow} className="fade-up">
           <StatCard
             label={`Chance of Water Shortage by ${displayed.simulation_end_year}`}
             value={`${(displayed.p_failure_by_end_year * 100).toFixed(1)}%`}
@@ -223,12 +235,12 @@ export default function Results() {
         </div>
 
         {/* Chart — updates live */}
-        <div style={{ animation: 'fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.22s both' }}>
+        <div className="fade-up">
           <SupplyDemandChart failureCurve={displayed.failure_curve} />
         </div>
 
         {/* Scenario results — updates live when levers change */}
-        <div style={{ ...styles.card, animation: 'fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.32s both' }}>
+        <div style={styles.card} className="fade-up">
           <h3 style={styles.sectionTitle}>Fixed Climate Scenarios</h3>
           <div style={styles.scenarioGrid}>
             {Object.entries(SCENARIO_LABELS).map(([key, label]) => {
@@ -252,17 +264,17 @@ export default function Results() {
         {/* What-If section                                                     */}
         {/* ------------------------------------------------------------------ */}
 
-        <div style={styles.divider}>
+        <div style={styles.divider} className="fade-up">
           <div style={styles.dividerLine} />
           <span style={styles.dividerLabel}>What-If Scenarios</span>
           <div style={styles.dividerLine} />
         </div>
 
-        <LeverPanel levers={levers} onChange={setLevers} />
+        <div className="fade-up"><LeverPanel levers={levers} onChange={setLevers} /></div>
 
         {/* AI Recommendations */}
         {isFail && (
-          <div style={styles.card}>
+          <div style={styles.card} className="fade-up">
             <div style={styles.recsHeader}>
               <div>
                 <h3 style={styles.sectionTitle}>AI Recommendations</h3>
@@ -305,7 +317,7 @@ export default function Results() {
         )}
 
         {/* Download report */}
-        <div style={styles.actions}>
+        <div style={styles.actions} className="fade-up">
           <a
             href={(() => {
               const base = `http://localhost:8000/projects/${id}/report`
