@@ -7,6 +7,17 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 console.log('MAPBOX TOKEN:', import.meta.env.VITE_MAPBOX_TOKEN)
 
+// Sort points by angle around their centroid so the polygon never self-intersects
+// regardless of click order. Works for any star-shaped parcel (all real parcels qualify).
+function sortPointsAngularly(points) {
+  if (points.length < 3) return points
+  const cx = points.reduce((sum, p) => sum + p[0], 0) / points.length
+  const cy = points.reduce((sum, p) => sum + p[1], 0) / points.length
+  return [...points].sort((a, b) => {
+    return Math.atan2(a[1] - cy, a[0] - cx) - Math.atan2(b[1] - cy, b[0] - cx)
+  })
+}
+
 // Cache County, Utah center coordinates
 const CACHE_COUNTY_CENTER = [-111.7, 41.74]
 const DEFAULT_ZOOM = 10
@@ -61,37 +72,39 @@ export default function ParcelMap({ onParcelDrawn }) {
       })
     })
 
+    // Redraws the polygon from current drawingPoints and notifies parent
+    const redrawPolygon = () => {
+      if (drawingPoints.current.length < 3) return
+      const sorted = sortPointsAngularly(drawingPoints.current)
+      const coordinates = [...sorted, sorted[0]]
+      map.current.getSource('parcel')?.setData({
+        type: 'Feature',
+        geometry: { type: 'Polygon', coordinates: [coordinates] }
+      })
+      onParcelDrawn?.({ type: 'Polygon', coordinates: [coordinates] })
+    }
+
     // Click handler to draw polygon
     map.current.on('click', (e) => {
       const { lng, lat } = e.lngLat
       drawingPoints.current.push([lng, lat])
       setPointCount(drawingPoints.current.length)
 
-      // Add marker at click point
-      const marker = new mapboxgl.Marker({ color: '#2563eb', scale: 0.7 })
+      // Add draggable marker at click point
+      const marker = new mapboxgl.Marker({ color: '#2563eb', scale: 0.7, draggable: true })
         .setLngLat([lng, lat])
         .addTo(map.current)
+
+      // Live-update the polygon while dragging
+      marker.on('drag', () => {
+        const { lng: newLng, lat: newLat } = marker.getLngLat()
+        const i = markers.current.indexOf(marker)
+        drawingPoints.current[i] = [newLng, newLat]
+        redrawPolygon()
+      })
+
       markers.current.push(marker)
-
-      // Update polygon on map
-      if (drawingPoints.current.length >= 3) {
-        const coordinates = [...drawingPoints.current, drawingPoints.current[0]]
-        
-        map.current.getSource('parcel')?.setData({
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [coordinates]
-          }
-        })
-
-        // Create GeoJSON and pass to parent
-        const geojson = {
-          type: 'Polygon',
-          coordinates: [coordinates]
-        }
-        onParcelDrawn?.(geojson)
-      }
+      redrawPolygon()
     })
 
     // Right-click to clear
