@@ -56,7 +56,10 @@ export default function Landing() {
       <nav style={s.nav}>
         <div style={s.navInner}>
           <img src="/image.png" alt="Thallo" style={s.logo} />
-          <button onClick={() => navigate('/login')} style={s.navBtn}>Sign In</button>
+          <div style={s.navBtns}>
+            <button onClick={() => navigate('/login')} style={s.navBtn}>Sign In</button>
+            <button onClick={() => navigate('/signup')} style={s.navBtnPrimary} className="btn-light">Sign Up</button>
+          </div>
         </div>
       </nav>
 
@@ -76,7 +79,7 @@ export default function Landing() {
           </p>
           <div style={s.heroCtas}>
             <button onClick={() => navigate('/login')} style={s.primaryBtn}>Get Started →</button>
-            <a href="#how-it-works" style={s.ghostBtn}>See how it works</a>
+            <a href="#how-it-works" style={s.ghostBtn} className="link-hover">See how it works</a>
           </div>
         </div>
 
@@ -161,7 +164,7 @@ export default function Landing() {
       {/* ── Footer ── */}
       <footer style={s.footer}>
         <div style={s.footerInner}>
-          <img src="/image.png" alt="Thallo" style={s.footerLogo} />
+          <span style={s.footerLogoText}>Thallo</span>
           <span style={s.footerMeta}>USU Sandbox Hackathon 2026 · Cache County, Utah</span>
         </div>
       </footer>
@@ -196,8 +199,13 @@ const s = {
     justifyContent: 'space-between'
   },
   logo: {
-    height: 32,
-    display: 'block'
+    height: 40,
+    display: 'block',
+  },
+  navBtns: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center'
   },
   navBtn: {
     background: 'none',
@@ -207,6 +215,16 @@ const s = {
     fontSize: 14,
     fontWeight: 600,
     color: C.white,
+    cursor: 'pointer'
+  },
+  navBtnPrimary: {
+    background: C.white,
+    border: 'none',
+    padding: '8px 20px',
+    borderRadius: 8,
+    fontSize: 14,
+    fontWeight: 600,
+    color: C.deep,
     cursor: 'pointer'
   },
 
@@ -413,9 +431,11 @@ const s = {
     flexWrap: 'wrap',
     gap: 8
   },
-  footerLogo: {
-    height: 24,
-    display: 'block'
+  footerLogoText: {
+    fontSize: 16,
+    fontWeight: 800,
+    color: C.white,
+    letterSpacing: '-0.03em',
   },
   footerMeta: {
     fontSize: 13,

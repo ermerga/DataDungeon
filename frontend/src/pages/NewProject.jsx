@@ -28,6 +28,20 @@ export default function NewProject() {
 
   const nameRef = useRef(null)
   const unitRef = useRef(null)
+  const mapRef = useRef(null)
+
+  const handleContinue = () => {
+    if (parcel && mapRef.current) {
+      const coords = parcel.coordinates[0]
+      const lngs = coords.map(c => c[0])
+      const lats = coords.map(c => c[1])
+      mapRef.current.fitBounds(
+        [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+        { padding: { top: 80, bottom: 80, left: 80, right: 80 + 380 }, duration: 900 }
+      )
+    }
+    setStep(1)
+  }
 
   useEffect(() => {
     if (step === 1) nameRef.current?.focus()
@@ -72,11 +86,11 @@ export default function NewProject() {
 
       {/* Map */}
       <div style={s.mapWrap}>
-        <ParcelMap onParcelDrawn={setParcel} />
+        <ParcelMap onParcelDrawn={setParcel} mapRef={mapRef} />
 
         {step === 0 && parcel && (
-          <button onClick={() => setStep(1)} style={s.continueBtn}>
-            Continue →
+          <button onClick={handleContinue} style={s.continueBtn}>
+            Continue
           </button>
         )}
       </div>
@@ -229,12 +243,13 @@ const s = {
   },
   continueBtn: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 68,
     right: 16,
+    width: 160,
     background: C.twilight,
     color: C.white,
     border: 'none',
-    padding: '12px 24px',
+    padding: '12px 0',
     borderRadius: 8,
     fontSize: 15,
     fontWeight: 600,

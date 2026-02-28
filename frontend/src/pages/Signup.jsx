@@ -10,18 +10,18 @@ const C = {
   white:    '#FFFFFF',
 }
 
-export default function Login() {
+export default function Signup() {
   const navigate = useNavigate()
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
+  const [confirm, setConfirm] = useState('')
 
-  const canSubmit = email.trim() && password.trim()
+  const canSubmit = name.trim() && email.trim() && password.trim() && confirm.trim()
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!canSubmit) return
-    setError(null)
     login()
     navigate('/app')
   }
@@ -39,10 +39,22 @@ export default function Login() {
       {/* ── Right: form panel ── */}
       <div style={s.formPanel}>
         <div style={s.formInner}>
-          <h1 style={s.title}>Welcome back</h1>
-          <p style={s.subtitle}>Sign in to run your simulation</p>
+          <h1 style={s.title}>Create account</h1>
+          <p style={s.subtitle}>Start running water viability simulations</p>
 
           <form onSubmit={handleSubmit} style={s.form}>
+            <div style={s.field}>
+              <label style={s.label}>Full Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Jane Smith"
+                style={s.input}
+                autoFocus
+              />
+            </div>
+
             <div style={s.field}>
               <label style={s.label}>Email</label>
               <input
@@ -51,7 +63,6 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 style={s.input}
-                autoFocus
               />
             </div>
 
@@ -66,7 +77,16 @@ export default function Login() {
               />
             </div>
 
-            {error && <div style={s.error}>{error}</div>}
+            <div style={s.field}>
+              <label style={s.label}>Confirm Password</label>
+              <input
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="••••••••"
+                style={s.input}
+              />
+            </div>
 
             <button
               type="submit"
@@ -74,13 +94,13 @@ export default function Login() {
               className="btn-light"
               style={{ ...s.submitBtn, opacity: canSubmit ? 1 : 0.45 }}
             >
-              Sign In →
+              Create Account →
             </button>
           </form>
 
           <p style={s.hint}>
-            No account?{' '}
-            <span onClick={() => navigate('/signup')} style={s.hintLink} className="hint-link">Sign up</span>
+            Already have an account?{' '}
+            <span onClick={() => navigate('/login')} style={s.hintLink} className="hint-link">Sign in</span>
           </p>
         </div>
       </div>
@@ -125,16 +145,6 @@ const s = {
     fontWeight: 600,
     cursor: 'pointer',
     opacity: 0.8
-  },
-  panelLogo: {
-    height: 36,
-    marginBottom: 16
-  },
-  panelTagline: {
-    margin: 0,
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.7)',
-    lineHeight: 1.5
   },
 
   // ── Right form panel
@@ -190,14 +200,6 @@ const s = {
     color: C.white,
     boxSizing: 'border-box',
     width: '100%'
-  },
-  error: {
-    background: 'rgba(220,38,38,0.15)',
-    color: '#fca5a5',
-    padding: '10px 14px',
-    borderRadius: 8,
-    fontSize: 13,
-    border: '1px solid rgba(220,38,38,0.3)'
   },
   submitBtn: {
     marginTop: 4,

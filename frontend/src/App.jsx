@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import NewProject from './pages/NewProject'
 import Results from './pages/Results'
 import WhatIf from './pages/WhatIf'
@@ -12,6 +13,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/app" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
         <Route path="/projects/:id/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
         <Route path="/projects/:id/whatif" element={<ProtectedRoute><WhatIf /></ProtectedRoute>} />

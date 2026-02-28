@@ -22,7 +22,7 @@ function sortPointsAngularly(points) {
 const CACHE_COUNTY_CENTER = [-111.7, 41.74]
 const DEFAULT_ZOOM = 10
 
-export default function ParcelMap({ onParcelDrawn }) {
+export default function ParcelMap({ onParcelDrawn, mapRef }) {
   const mapContainer = useRef(null)
   const map = useRef(null)
   const drawingPoints = useRef([])
@@ -36,8 +36,11 @@ export default function ParcelMap({ onParcelDrawn }) {
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/satellite-streets-v12',
       center: CACHE_COUNTY_CENTER,
-      zoom: DEFAULT_ZOOM
+      zoom: DEFAULT_ZOOM,
+      attributionControl: false,
     })
+    map.current.addControl(new mapboxgl.AttributionControl(), 'bottom-left')
+    if (mapRef) mapRef.current = map.current
 
     map.current.on('load', () => {
       // Add source for the drawn polygon
@@ -164,15 +167,16 @@ export default function ParcelMap({ onParcelDrawn }) {
             position: 'absolute',
             bottom: 16,
             right: 16,
-            background: '#33415C',
+            width: 160,
+            background: 'rgba(180,30,30,0.85)',
             color: '#FFFFFF',
             border: 'none',
-            padding: '10px 20px',
+            padding: '12px 0',
             borderRadius: 8,
             cursor: 'pointer',
             fontWeight: 600,
-            fontSize: 14,
-            boxShadow: '0 2px 8px rgba(0,18,51,0.5)'
+            fontSize: 15,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)'
           }}
         >
           Clear Drawing
