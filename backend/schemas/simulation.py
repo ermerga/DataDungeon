@@ -16,10 +16,11 @@ class ScenarioResults(BaseModel):
 
 class SimulationResult(BaseModel):
     verdict: str                              # "PASS" | "FAIL"
-    p_failure_by_2074: float                  # 0.0 – 1.0
+    p_failure_by_end_year: float              # 0.0 – 1.0
+    simulation_end_year: int                  # build_year + 49
     first_failure_year: Optional[int]         # None if PASS
     median_deficit_acre_feet: Optional[float] # None if PASS
-    failure_curve: List[FailurePoint]         # one entry per year, 2025–2074
+    failure_curve: List[FailurePoint]         # one entry per year of the simulation window
     scenario_results: ScenarioResults
 
 

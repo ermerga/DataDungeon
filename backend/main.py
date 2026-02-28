@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from db.connection import engine, Base
 import models.project  # noqa: F401 — must import so SQLAlchemy registers the table
-from routers import projects, simulation, whatif, agent
+from routers import projects, simulation, whatif, agent, report
 
 
 # lifespan runs once when the app starts and once when it shuts down.
@@ -31,6 +31,7 @@ app.include_router(projects.router)
 app.include_router(simulation.router)
 app.include_router(whatif.router)
 app.include_router(agent.router)
+app.include_router(report.router)
 
 
 @app.get("/health", tags=["Health"])

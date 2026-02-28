@@ -127,7 +127,7 @@ def get_recommendations(
     # Specific numbers (p_failure, deficit) help Claude calibrate how aggressive
     # its suggestions need to be.
 
-    p_fail = simulation_result["p_failure_by_2074"]
+    p_fail = simulation_result["p_failure_by_end_year"]
     first_year = simulation_result.get("first_failure_year") or "N/A"
     deficit = simulation_result.get("median_deficit_acre_feet") or "N/A"
     scenarios = simulation_result["scenario_results"]
@@ -208,7 +208,7 @@ Rank them from most to least impactful. Consider cost and practicality in your e
             "rank": 0,  # set after sorting below
             "levers": levers,
             "projected_verdict": result["verdict"],
-            "projected_p_failure": result["p_failure_by_2074"],
+            "projected_p_failure": result["p_failure_by_end_year"],
             "explanation": suggestion.get("explanation", ""),
         })
 
